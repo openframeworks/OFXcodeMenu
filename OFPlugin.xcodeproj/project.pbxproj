@@ -43,13 +43,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		66C2FE7C182F0E02002A9D50 /* addons */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = addons;
-			sourceTree = "<group>";
-		};
 		66C4B89D182EB24200C2AA97 = {
 			isa = PBXGroup;
 			children = (
@@ -70,7 +63,6 @@
 		66C4B8A8182EB24200C2AA97 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				66C2FE7C182F0E02002A9D50 /* addons */,
 				66C4B8A9182EB24200C2AA97 /* AppKit.framework */,
 				66C4B8AB182EB24200C2AA97 /* Foundation.framework */,
 			);

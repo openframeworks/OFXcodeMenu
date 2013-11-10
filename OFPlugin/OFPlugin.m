@@ -39,34 +39,46 @@
 	
 	if (self = [super init]) {
 		self.bundle = plugin;
-		
-		NSMenuItem * ofMenuItem = [[NSMenuItem alloc] initWithTitle:@"openFrameworks" action:@selector(menuSelected:) keyEquivalent:@""];
-		[ofMenuItem setTarget:self];
-		
-		NSMenu * topLevelMenu = [[NSMenu alloc] initWithTitle:@"OF"];
-		[ofMenuItem setSubmenu:topLevelMenu];
-		
-		NSMenuItem * addonsPathItem = [topLevelMenu addItemWithTitle:@"Set addons path..." action:@selector(setAddonsPath:) keyEquivalent:@""];
-		[addonsPathItem setTarget:self];
-		[addonsPathItem setEnabled:YES];
-		
-		_addAddonItem = [topLevelMenu addItemWithTitle:@"Add addon" action:@selector(menuSelected:) keyEquivalent:@""];
-		_addonsListMenu = [[NSMenu alloc] initWithTitle:@"addon-list"];
-		[_addAddonItem setTarget:self];
-		
-		_addonsPath = [@"~/workspace/openFrameworks/addons/" stringByExpandingTildeInPath];
-		[_addAddonItem setSubmenu:_addonsListMenu];
-		[self scanAddons];
-
-		[[NSApp mainMenu] insertItem:ofMenuItem atIndex:5];
+		[self generateMenu];
 	}
 	return self;
 }
 
-- (void)menuSelected:(id)sender
-{
+#pragma mark - Menu stuffs
+
+- (void)generateMenu {
+	NSMenuItem * ofMenuItem = [[NSMenuItem alloc] initWithTitle:@"openFrameworks" action:@selector(menuSelected:) keyEquivalent:@""];
+	[ofMenuItem setTarget:self];
+	
+	NSMenu * topLevelMenu = [[NSMenu alloc] initWithTitle:@"OF"];
+	[ofMenuItem setSubmenu:topLevelMenu];
+	
+	NSMenuItem * addonsPathItem = [topLevelMenu addItemWithTitle:@"Set addons path..." action:@selector(setAddonsPath:) keyEquivalent:@""];
+	[addonsPathItem setTarget:self];
+	[addonsPathItem setEnabled:YES];
+	
+	_addAddonItem = [topLevelMenu addItemWithTitle:@"Add addon" action:@selector(menuSelected:) keyEquivalent:@""];
+	_addonsListMenu = [[NSMenu alloc] initWithTitle:@"addon-list"];
+	[_addAddonItem setTarget:self];
+	
+	_addonsPath = [@"~/workspace/openFrameworks/addons/" stringByExpandingTildeInPath];
+	[_addAddonItem setSubmenu:_addonsListMenu];
+	[self scanAddons];
+	
+	NSUInteger menuIndex = [[NSApp mainMenu] indexOfItemWithTitle:@"Navigate"];
+	[[NSApp mainMenu] insertItem:ofMenuItem atIndex:menuIndex > 0 ? menuIndex : 5];
+
+}
+
+- (void)menuSelected:(id)sender {
 	
 }
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+	return YES;
+}
+
+#pragma mark - Addons directory
 
 - (void)scanAddons
 {
@@ -84,7 +96,7 @@
 				for(NSString * addon in sortedAddons) {
 					if([addon rangeOfString:@"ofx"].location != NSNotFound) {
 						OFAddonMenuItem * addonItem = [[OFAddonMenuItem alloc] initWithTitle:addon
-																					  action:@selector(addAddon:)
+																					  action:@selector(addAddonForMenuItem:)
 																			   keyEquivalent:@""];
 						
 						NSString * addonPath = [NSString stringWithFormat:@"%@/%@/", _addonsPath, addon];
@@ -109,31 +121,35 @@
 		[openPanel setCanChooseDirectories:YES];
 		[openPanel setTitle:@"Point me at your addons folder"];
 		[openPanel beginWithCompletionHandler:^(NSInteger result) {
-			NSURL * addonsURL = [[openPanel URLs] objectAtIndex:0];
-			_addonsPath = [addonsURL path];
-			[self scanAddons];
+			if(result == NSFileHandlingPanelOKButton) {
+				NSURL * addonsURL = [[openPanel URLs] objectAtIndex:0];
+				_addonsPath = [addonsURL path];
+				[self scanAddons];
+			}
 		}];
 	});
 }
 
-- (void)addAddon:(OFAddonMenuItem *)addonMenuItem
+#pragma mark - Actions
+
+- (void)addAddonForMenuItem:(OFAddonMenuItem *)addonMenuItem
 {
+	// These Obj-C classes found via class-dumping Xcode's internal frameworks
+	
+	// IDEWorkspaceDocument -> IDEKit
+	// IDEWorkspace -> IDEFoundation
+	// Xcode3Project, Xcode3Group -> DevToolsCore
+	
 	@try {
-		id document  = [[[NSApp keyWindow] windowController] document];
-		id workspace = objc_msgSend(document, @selector(workspace));
-		id container = objc_msgSend(workspace, @selector(wrappedXcode3Project));
-		id addonsGroup = [self findAddonsGroupFromRoot:objc_msgSend(container, @selector(rootGroup))];
+		id /* IDEWorkspaceDocument */ document = [[[NSApp keyWindow] windowController] document];
+		id /* IDEWorkspace */ workspace = objc_msgSend(document, @selector(workspace));
+		id /* Xcode3Project */ container = objc_msgSend(workspace, @selector(wrappedXcode3Project));
+		id /* Xcode3Group */ addonsGroup = [self findAddonsGroupFromRoot:objc_msgSend(container, @selector(rootGroup))];
 		
 		if(addonsGroup) {
-			NSLog(@"adding %@", addonMenuItem.addon.path);
-			NSURL * addonURL = [NSURL fileURLWithPath:addonMenuItem.addon.path];
-			objc_msgSend(addonsGroup,
-						 @selector(structureEditInsertFileURLs:atIndex:createGroupsForFolders:),
-						 @[addonURL],
-						 0,
-						 YES);
+			[self addAddon:addonMenuItem.addon toAddonsGroup:addonsGroup];
 		} else {
-			[[NSAlert alertWithMessageText:@"Couldn't find an addons group"
+			[[NSAlert alertWithMessageText:@"Couldn't find an \"addons\" group"
 							 defaultButton:@"Oh, right"
 						   alternateButton:nil
 							   otherButton:nil
@@ -148,13 +164,23 @@
 	}
 }
 
+- (void)addAddon:(OFAddon *)addon toAddonsGroup:(id /* Xcode3Group */) addonsGroup {
+	
+	NSURL * addonURL = [NSURL fileURLWithPath:addon.path];
+	objc_msgSend(addonsGroup, @selector(structureEditInsertFileURLs:atIndex:createGroupsForFolders:), @[addonURL], 0, YES);
+}
+
+#pragma mark - Util
+
 // breadth first search for a group named "addons"
-- (id) findAddonsGroupFromRoot:(id)root {
+- (id) findAddonsGroupFromRoot:(id /* Xcode3Group */) root {
+	
+	if(root == nil) return nil;
 	
 	NSMutableArray * queue = [[NSMutableArray alloc] init];
 	NSMutableSet * visited = [[NSMutableSet alloc] init];
-	[visited addObject:objc_msgSend(root, @selector(name))];
 	[queue addObject:root];
+	[visited addObject:root];
 	
 	while([queue count] > 0) {
 		id node = [queue objectAtIndex:0];
@@ -163,23 +189,19 @@
 		if([nodeName caseInsensitiveCompare:@"addons"] == NSOrderedSame) {
 			return node;
 		} else {
-			NSArray * subitems = objc_msgSend(node, @selector(subitems));
-			for(id item in subitems) {
-				NSString * itemName = objc_msgSend(item, @selector(name));
-				if(![visited containsObject:itemName]) {
-					[visited addObject:itemName];
-					[queue addObject:item];
+			if([node respondsToSelector:@selector(subitems)]) {
+				NSArray * subitems = objc_msgSend(node, @selector(subitems));
+				for(id item in subitems) {
+					if(![visited containsObject:item]) {
+						[visited addObject:item];
+						[queue addObject:item];
+					}
 				}
 			}
 		}
 	}
 	
 	return nil;
-}
-
-- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
-{
-	return YES;
 }
 
 @end
