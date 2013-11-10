@@ -170,19 +170,13 @@
 	id newGroups = objc_msgSend(addonsGroup, @selector(structureEditInsertFileURLs:atIndex:createGroupsForFolders:), @[addonURL], 0, YES);
 	id newGroup = [newGroups objectAtIndex:0];
 	
-	// removing top-level stuff that's not "src" or "libs"
-	NSMutableIndexSet * stuffToRemove = [[NSMutableIndexSet alloc] init];
-	NSArray * addonItems = objc_msgSend(newGroup, @selector(subitems));
-	for(NSUInteger i = 0; i < addonItems.count; i++) {
-		NSString * itemName = objc_msgSend(addonItems[i], @selector(name));
-		if([itemName caseInsensitiveCompare:@"src"] != NSOrderedSame &&
-		   [itemName caseInsensitiveCompare:@"libs"] != NSOrderedSame) {
-			[stuffToRemove addIndex:i];
-		}
-	}
+	// remove top-level stuff that's not "src" or "libs"
+	[self removeItemsFromGroup:newGroup withSet:[NSSet setWithArray:@[@"src", @"libs"]] isWhiteList:YES recursive:NO];
 	
-	NSError * err = nil;
-	objc_msgSend(newGroup, @selector(structureEditRemoveSubitemsAtIndexes:error:), stuffToRemove, &err);
+	// remove anything that identifies as being non-osx
+	NSMutableSet * foldersToExclude = [NSMutableSet setWithArray:@[@"win32", @"windows", @"linux", @"android"]];
+	[foldersToExclude addObjectsFromArray:[addon foldersToExclude]];
+	[self removeItemsFromGroup:newGroup withSet:foldersToExclude isWhiteList:NO recursive:YES];
 }
 
 #pragma mark - Util
@@ -212,6 +206,49 @@
 	}
 	
 	return nil;
+}
+
+- (void) removeItemsFromGroup:(id)group withSet:(NSSet *)set isWhiteList:(BOOL)whiteList recursive:(BOOL)recursive {
+	
+	if(!group || ![group respondsToSelector:@selector(subitems)]) {
+		return;
+	} else {
+		NSArray * subitems = objc_msgSend(group, @selector(subitems));
+		if(recursive) {
+			for(id item in subitems) {
+				[self removeItemsFromGroup:item withSet:set isWhiteList:whiteList recursive:YES];
+			}
+		}
+		
+		NSMutableIndexSet * stuffToRemove = [[NSMutableIndexSet alloc] init];
+		
+		for(NSUInteger i = 0; i < subitems.count; i++) {
+			NSString * itemName = objc_msgSend(subitems[i], @selector(name));
+			BOOL shouldRemove = NO;
+			
+			for(NSString * ident in set) {
+				if([itemName rangeOfString:ident].location != NSNotFound) {
+					shouldRemove = YES;
+					break;
+				}
+			}
+			
+			if(whiteList) {
+				shouldRemove = !shouldRemove;
+			}
+			
+			if(shouldRemove) {
+				[stuffToRemove addIndex:i];
+			}
+		}
+		
+		NSError * err = nil;
+		objc_msgSend(group, @selector(structureEditRemoveSubitemsAtIndexes:error:), stuffToRemove, &err);
+		
+		if(err) {
+			NSLog(@"Error when removing %@", err);
+		}
+	}
 }
 
 @end

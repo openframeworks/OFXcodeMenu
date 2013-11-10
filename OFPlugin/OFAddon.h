@@ -14,5 +14,6 @@
 
 @property (nonatomic, strong) NSString * path;
 @property (nonatomic, strong) NSString * name;
+@property (nonatomic, readonly) NSArray * foldersToExclude;
 
 @end

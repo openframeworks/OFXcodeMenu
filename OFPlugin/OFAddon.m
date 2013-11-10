@@ -18,4 +18,13 @@
 	return a;
 }
 
+- (NSArray *)foldersToExclude {
+	
+	if([self.name isEqualToString:@"ofxKinect"]) {
+		return @[@"libfreenect"];
+	}
+	
+	return nil;
+}
+
 @end
