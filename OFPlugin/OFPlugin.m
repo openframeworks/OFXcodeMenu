@@ -175,7 +175,7 @@
 	[self removeItemsFromGroup:newGroup withSet:[NSSet setWithArray:@[@"src", @"libs"]] isWhiteList:YES recursive:NO];
 	
 	// remove anything that identifies as being non-osx
-	NSMutableSet * foldersToExclude = [NSMutableSet setWithArray:@[@"win32", @"windows", @"linux", @"android"]];
+	NSMutableSet * foldersToExclude = [NSMutableSet setWithArray:@[@"win32", @"windows", @"vs", @"win_cb", @"linux", @"android"]];
 	[foldersToExclude addObjectsFromArray:[addon foldersToExclude]];
 	[self removeItemsFromGroup:newGroup withSet:foldersToExclude isWhiteList:NO recursive:YES];
 	
@@ -184,36 +184,53 @@
 	id /* PBXGroupEnumerator */ pbxGroupEnumerator = objc_msgSend(pbxGroup, @selector(groupEnumerator));
 	
 	NSMutableArray * sourceFileReferences = [[NSMutableArray alloc] init];
-//	NSMutableArray * libReferences = [[NSMutableArray alloc] init];
-	for(id groupItem in pbxGroupEnumerator) {
+	NSMutableArray * libReferences = [[NSMutableArray alloc] init];
+	for(id item in pbxGroupEnumerator) {
 		
-		if([groupItem class] != NSClassFromString(@"PBXFileReference")) continue;
+		if([item class] != NSClassFromString(@"PBXFileReference")) continue;
 		
-		if([groupItem respondsToSelector:@selector(fileType)]) {
-			id /* PBXFileType */ fileType = objc_msgSend(groupItem, @selector(fileType));
-			NSString * fileUTI = objc_msgSend(fileType, @selector(UTI));
-			BOOL isSource = [fileUTI rangeOfString:@"source"].location != NSNotFound;
-			
-			if(isSource) {
-				[sourceFileReferences addObject:groupItem];
-			}
+		id /* PBXFileType */ fileType = objc_msgSend(item, @selector(fileType));
+		NSString * fileUTI = objc_msgSend(fileType, @selector(UTI));
+		
+		// if this is a source file (header files don't count)
+		if([fileUTI rangeOfString:@"source"].location != NSNotFound) {
+			[sourceFileReferences addObject:item];
+		}
+		// if this is a static lib
+		else if(((BOOL (*)(id, SEL))objc_msgSend)(fileType, @selector(isStaticLibrary))) {
+			[libReferences addObject:item];
 		}
 	}
 	
-	for (id sourceFileReference in sourceFileReferences) {
-		objc_msgSend(targets[0], @selector(addReference:), sourceFileReference);
-	}
-	
-	NSArray * sourcesBuildPhases = objc_msgSend(targets[0], @selector(buildPhasesOfClass:), NSClassFromString(@"PBXSourcesBuildPhase"));
-	for(id phase in sourcesBuildPhases) {
-		objc_msgSend(phase, @selector(insertBuildFiles:atIndex:), sourceFileReferences, 0);
+	for(id target in targets) {
+		
+		// add source files and libraries
+		for (id sourceFileReference in sourceFileReferences) {
+			objc_msgSend(target, @selector(addReference:), sourceFileReference);
+		}
+		
+		for(id libReference in libReferences) {
+			objc_msgSend(target, @selector(addReference:), libReference);
+		}
+		
+		// add the source files to the "Compile Sources" phase
+		NSArray * sourcesBuildPhases = objc_msgSend(target, @selector(buildPhasesOfClass:), NSClassFromString(@"PBXSourcesBuildPhase"));
+		for(id phase in sourcesBuildPhases) {
+			objc_msgSend(phase, @selector(insertBuildFiles:atIndex:), sourceFileReferences, 0);
+		}
+		
+		// add libs to the "link binary with libraries" phase
+		NSArray * frameworksBuildPhases = objc_msgSend(target, @selector(buildPhasesOfClass:), NSClassFromString(@"PBXFrameworksBuildPhase"));
+		for(id phase in frameworksBuildPhases) {
+			objc_msgSend(phase, @selector(insertBuildFiles:atIndex:), libReferences, 0);
+		}
 	}
 }
 
 #pragma mark - Util
 
 // breadth first search for a group named "addons"
-- (id) findAddonsGroupFromRoot:(id /* Xcode3Group */) root {
+- (id) findAddonsGroupFromRoot:(id /* Xcode3Group */)root {
 	
 	if(root == nil) return nil;
 	
