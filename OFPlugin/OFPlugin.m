@@ -11,6 +11,8 @@
 #import "OFAddonMenuItem.h"
 #import <objc/objc-runtime.h>
 
+NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
+
 @interface OFPlugin() {
 	
 	NSMenu * _OFMenu;
@@ -50,13 +52,17 @@
 #pragma mark - Menu stuffs
 
 - (void)generateMenu {
-	_topLevelMenuItem = [[NSMenuItem alloc] initWithTitle:@"openFrameworks" action:@selector(menuSelected:) keyEquivalent:@""];
+	_topLevelMenuItem = [[NSMenuItem alloc] initWithTitle:@"openFrameworks"
+												   action:@selector(menuSelected:)
+											keyEquivalent:@""];
 	[_topLevelMenuItem setTarget:self];
 	
 	_OFMenu = [[NSMenu alloc] initWithTitle:@"OF"];
 	[_topLevelMenuItem setSubmenu:_OFMenu];
 	
-	NSMenuItem * addonsPathItem = [_OFMenu addItemWithTitle:@"Set addons path..." action:@selector(setAddonsPath:) keyEquivalent:@""];
+	NSMenuItem * addonsPathItem = [_OFMenu addItemWithTitle:@"Set addons path..."
+													 action:@selector(showAddonsPathSelectionPanel:)
+											  keyEquivalent:@""];
 	[addonsPathItem setTarget:self];
 	[addonsPathItem setEnabled:YES];
 	
@@ -64,7 +70,11 @@
 	_addonsListMenu = [[NSMenu alloc] initWithTitle:@"addon-list"];
 	[_addAddonItem setTarget:self];
 	
-	_addonsPath = [@"~/workspace/openFrameworks/addons/" stringByExpandingTildeInPath];
+	_addonsPath = [[NSUserDefaults standardUserDefaults] stringForKey:kOpenFrameworksAddonsPath];
+	if(!_addonsPath) {
+		[self setAddonsPath:[@"~/openFrameworks/addons/" stringByExpandingTildeInPath]];
+	}
+	
 	[_addAddonItem setSubmenu:_addonsListMenu];
 	[self scanAddons];
 	
@@ -119,8 +129,7 @@
 	});
 }
 
-// TODO: store last addon path in NSUserDefaults
-- (void)setAddonsPath:(id)sender
+- (void)showAddonsPathSelectionPanel:(id)sender
 {
 	dispatch_async(dispatch_get_main_queue(), ^{
 		NSOpenPanel * openPanel = [NSOpenPanel openPanel];
@@ -129,13 +138,17 @@
 		[openPanel setTitle:@"Point me at your addons folder"];
 		[openPanel beginWithCompletionHandler:^(NSInteger result) {
 			if(result == NSFileHandlingPanelOKButton) {
-				NSURL * addonsURL = [[openPanel URLs] objectAtIndex:0];
-				_addonsPath = [addonsURL path];
-				[_addonsListMenu removeAllItems];
-				[self scanAddons];
+				[self setAddonsPath:[[[openPanel URLs] objectAtIndex:0] path]];
 			}
 		}];
 	});
+}
+
+- (void)setAddonsPath:(NSString *)addonsPath {
+	_addonsPath = addonsPath;
+	[[NSUserDefaults standardUserDefaults] setObject:addonsPath forKey:kOpenFrameworksAddonsPath];
+	[_addonsListMenu removeAllItems];
+	[self scanAddons];
 }
 
 #pragma mark - Actions
