@@ -20,6 +20,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	NSString * _addonsPath;
 	NSMenuItem * _topLevelMenuItem;
 	NSMenuItem * _addAddonItem;
+	NSMenuItem * _websiteItem;
 }
 
 @property (nonatomic, strong) NSBundle * bundle;
@@ -45,6 +46,13 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	if (self = [super init]) {
 		self.bundle = plugin;
 		[self generateMenu];
+		
+		_addonsPath = [[NSUserDefaults standardUserDefaults] stringForKey:kOpenFrameworksAddonsPath];
+		if(!_addonsPath) {
+			[self setAddonsPath:[@"~/openFrameworks/addons/" stringByExpandingTildeInPath]];
+		}
+		
+		[self scanAddons];
 	}
 	return self;
 }
@@ -69,14 +77,13 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	_addAddonItem = [_OFMenu addItemWithTitle:@"Add addon" action:@selector(menuSelected:) keyEquivalent:@""];
 	_addonsListMenu = [[NSMenu alloc] initWithTitle:@"addon-list"];
 	[_addAddonItem setTarget:self];
-	
-	_addonsPath = [[NSUserDefaults standardUserDefaults] stringForKey:kOpenFrameworksAddonsPath];
-	if(!_addonsPath) {
-		[self setAddonsPath:[@"~/openFrameworks/addons/" stringByExpandingTildeInPath]];
-	}
-	
 	[_addAddonItem setSubmenu:_addonsListMenu];
-	[self scanAddons];
+	
+	[_OFMenu addItem:[NSMenuItem separatorItem]];
+	
+	_websiteItem = [_OFMenu addItemWithTitle:@"Open ofxaddons.com" action:@selector(showAddonsWebsite:) keyEquivalent:@""];
+	[_websiteItem setTarget:self];
+	[_websiteItem setEnabled:YES];
 	
 	NSUInteger menuIndex = [[NSApp mainMenu] indexOfItemWithTitle:@"Navigate"];
 	[[NSApp mainMenu] insertItem:_topLevelMenuItem atIndex:menuIndex > 0 ? menuIndex : 5];
@@ -95,6 +102,10 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 	
 	return YES;
+}
+
+- (void)showAddonsWebsite:(id)sender {
+	[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://ofxaddons.com"]];
 }
 
 #pragma mark - Addons directory
@@ -147,7 +158,6 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 - (void)setAddonsPath:(NSString *)addonsPath {
 	_addonsPath = addonsPath;
 	[[NSUserDefaults standardUserDefaults] setObject:addonsPath forKey:kOpenFrameworksAddonsPath];
-	[_addonsListMenu removeAllItems];
 	[self scanAddons];
 }
 
@@ -282,8 +292,8 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	
 	// add source file, library and framework references to all targets
 	for(id target in targets) {
-		for (id sourceFileReference in referencesToAdd) {
-			objc_msgSend(target, @selector(addReference:), sourceFileReference);
+		for (id ref in referencesToAdd) {
+			objc_msgSend(target, @selector(addReference:), ref);
 		}
 	}
 }
