@@ -14,6 +14,9 @@
 
 @property (nonatomic, strong) NSString * path;
 @property (nonatomic, strong) NSString * name;
+
 @property (nonatomic, readonly) NSArray * foldersToExclude;
+@property (nonatomic, readonly) NSArray * extraHeaderSearchPaths;
+@property (nonatomic, readonly) NSArray * extraLibPaths;
 
 @end

@@ -1,11 +1,3 @@
-//
-//  OFAddon.m
-//  OFPlugin
-//
-//  Created by Adam Carlucci on 11/9/2013.
-//  Copyright (c) 2013 lol. All rights reserved.
-//
-
 #import "OFAddon.h"
 
 @implementation OFAddon
@@ -19,11 +11,25 @@
 }
 
 - (NSArray *)foldersToExclude {
-	
 	if([self.name isEqualToString:@"ofxKinect"]) {
 		return @[@"libfreenect"];
 	}
+	return nil;
+}
+
+- (NSArray *)extraHeaderSearchPaths {
 	
+	if([self.name isEqualToString:@"ofxCv"]) {
+		return @[@"../../../addons/ofxOpenCv/libs/opencv/include/",
+				 @"../../../addons/ofxCv/libs/ofxCv/include/"];
+	}
+	return nil;
+}
+
+- (NSArray *)extraLibPaths {
+	if([self.name isEqualToString:@"ofxCv"]) {
+		return @[@"../../../addons/ofxOpenCv/libs/opencv/lib/osx/opencv.a"];
+	}
 	return nil;
 }
 

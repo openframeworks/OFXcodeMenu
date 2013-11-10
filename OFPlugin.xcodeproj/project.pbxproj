@@ -18,7 +18,6 @@
 /* Begin PBXFileReference section */
 		6671EB57182F00040050B812 /* OFAddon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OFAddon.h; sourceTree = "<group>"; };
 		6671EB58182F00040050B812 /* OFAddon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OFAddon.m; sourceTree = "<group>"; };
-		66ABA6B3182FF21200C75AFF /* OFPlugin copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "OFPlugin copy-Info.plist"; path = "/Users/adam/workspace/OFPlugin/OFPlugin copy-Info.plist"; sourceTree = "<absolute>"; };
 		66B17736182F06CB007AE57F /* OFAddonMenuItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OFAddonMenuItem.h; sourceTree = "<group>"; };
 		66B17737182F06CB007AE57F /* OFAddonMenuItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OFAddonMenuItem.m; sourceTree = "<group>"; };
 		66C4B8A6182EB24200C2AA97 /* OFPlugin.xcplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OFPlugin.xcplugin; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -44,20 +43,12 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		660A65E9182F6857000E9F9C /* addons */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = addons;
-			sourceTree = "<group>";
-		};
 		66C4B89D182EB24200C2AA97 = {
 			isa = PBXGroup;
 			children = (
 				66C4B8AD182EB24200C2AA97 /* OFPlugin */,
 				66C4B8A8182EB24200C2AA97 /* Frameworks */,
 				66C4B8A7182EB24200C2AA97 /* Products */,
-				66ABA6B3182FF21200C75AFF /* OFPlugin copy-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -81,7 +72,6 @@
 		66C4B8AD182EB24200C2AA97 /* OFPlugin */ = {
 			isa = PBXGroup;
 			children = (
-				660A65E9182F6857000E9F9C /* addons */,
 				66C4B8B3182EB24300C2AA97 /* OFPlugin.h */,
 				66C4B8B4182EB24300C2AA97 /* OFPlugin.m */,
 				6671EB57182F00040050B812 /* OFAddon.h */,

@@ -1,11 +1,3 @@
-//
-//  OFPlugin.m
-//  OFPlugin
-//
-//  Created by Adam on 2013-08-14.
-//    Copyright (c) 2013 admsyn. All rights reserved.
-//
-
 #import "OFPlugin.h"
 #import "OFAddon.h"
 #import "OFAddonMenuItem.h"
@@ -195,7 +187,9 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		id /* Xcode3Group */ addonsGroup = [self findAddonsGroupFromRoot:objc_msgSend(container, @selector(rootGroup))];
 		
 		if(addonsGroup) {
-			[self addAddon:addonMenuItem.addon toGroup:addonsGroup forTargets:objc_msgSend(project, @selector(targets))];
+			NSArray * targets = objc_msgSend(project, @selector(targets));
+			[self addAddon:addonMenuItem.addon toGroup:addonsGroup andTargets:targets inProject:project];
+			[self modifyBuildSettingsInTargets:targets forAddon:addonMenuItem.addon];
 		} else {
 			[[NSAlert alertWithMessageText:@"Couldn't find an \"addons\" group"
 							 defaultButton:@"Oh, right"
@@ -212,21 +206,46 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 }
 
-- (void)addAddon:(OFAddon *)addon toGroup:(id /* Xcode3Group */)addonsGroup forTargets:(NSArray *)targets {
+- (void)addAddon:(OFAddon *)addon toGroup:(id /* Xcode3Group */)addonsGroup andTargets:(NSArray *)targets inProject:(id /* PBXProject */)project {
 	
 	NSURL * addonURL = [NSURL fileURLWithPath:addon.path];
 	id newGroups = objc_msgSend(addonsGroup, @selector(structureEditInsertFileURLs:atIndex:createGroupsForFolders:), @[addonURL], 0, YES);
 	id newGroup = [newGroups objectAtIndex:0];
 	
-	// remove all top-level stuff that's not "src" or "libs"
+	// remove all top-level stuff that's NOT "src" or "libs" (e.g. examples, thumbnails)
 	[self removeItemsFromGroup:newGroup withSet:[NSSet setWithArray:@[@"src", @"libs"]] isWhiteList:YES recursive:NO];
 	
-	// remove anything that identifies as being non-osx
+	// add any external libs the addon says it needs
+	NSArray * extraLibs = addon.extraLibPaths;
+	NSString * projectPath = [objc_msgSend(project, @selector(path)) stringByDeletingLastPathComponent];
+	for(NSString * libPath in extraLibs) {
+		NSString * fullLibPath = [NSString stringWithFormat:@"%@/%@", projectPath, libPath];
+		NSURL * libURL = [NSURL fileURLWithPath:fullLibPath];
+		objc_msgSend(newGroup, @selector(structureEditInsertFileURLs:atIndex:createGroupsForFolders:), @[libURL], 0, YES);
+	}
+	
+	// remove anything that identifies as being non-osx / non-ios
 	NSMutableSet * foldersToExclude = [NSMutableSet setWithArray:@[@"win32", @"windows", @"vs", @"win_cb", @"linux", @"android"]];
 	[foldersToExclude addObjectsFromArray:[addon foldersToExclude]];
 	[self removeItemsFromGroup:newGroup withSet:foldersToExclude isWhiteList:NO recursive:YES];
 	
 	[self addSourceFilesAndLibsFromGroup:newGroup toTargets:targets];
+}
+
+- (void)modifyBuildSettingsInTargets:(NSArray * /* PBXTarget */)targets forAddon:(OFAddon *)addon {
+	
+	for(id /* PBXTarget */ target in targets) {
+		id /* XCConfigurationList */ configurationList = objc_msgSend(target, @selector(buildConfigurationList));
+		NSArray * buildConfigurationNames = objc_msgSend(configurationList, @selector(buildConfigurationNames));
+		
+		for(NSString * configName in buildConfigurationNames) {
+			NSArray * settings = objc_msgSend(configurationList, @selector(buildSettingDictionariesForConfigurationName:errors:), configName, nil);
+			for(id /* DVTMacroDefinitionTable */ macroTable in settings) {
+				[self addPaths:addon.extraHeaderSearchPaths forSetting:@"USER_HEADER_SEARCH_PATHS" toTable:macroTable];
+			}
+		}
+		objc_msgSend(configurationList, @selector(invalidateCaches));
+	}
 }
 
 #pragma mark - Util
@@ -322,6 +341,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	NSString * fileUTI = objc_msgSend(fileType, @selector(UTI));
 	
 	if([fileUTI rangeOfString:@"source"].location != NSNotFound || // is a source file?
+	   [fileUTI rangeOfString:@"header"].location != NSNotFound || // is a header?
 	   ((BOOL (*)(id, SEL))objc_msgSend)(fileType, @selector(isStaticLibrary)) || // is a static lib?
 	   ((BOOL (*)(id, SEL))objc_msgSend)(fileType, @selector(isFramework))) // is a framework?
 	{
@@ -329,6 +349,22 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 	
 	return NO;
+}
+
+- (void) addPaths:(NSArray *)paths forSetting:(NSString *)setting toTable:(id /* DVTMacroDefinitionTable */)table {
+	
+	if(!paths || !table) return;
+	
+	NSArray * currentPaths = objc_msgSend(table, @selector(valueForKey:), setting);
+	NSArray * modifiedPaths = nil;
+	
+	if(currentPaths) {
+		modifiedPaths = [currentPaths arrayByAddingObjectsFromArray:paths];
+	} else {
+		modifiedPaths = paths;
+	}
+	
+	objc_msgSend(table, @selector(setObject:forKeyedSubscript:), modifiedPaths, setting);
 }
 
 @end
