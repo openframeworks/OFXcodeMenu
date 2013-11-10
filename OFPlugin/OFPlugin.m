@@ -67,7 +67,7 @@
 	
 	NSUInteger menuIndex = [[NSApp mainMenu] indexOfItemWithTitle:@"Navigate"];
 	[[NSApp mainMenu] insertItem:ofMenuItem atIndex:menuIndex > 0 ? menuIndex : 5];
-
+	
 }
 
 - (void)menuSelected:(id)sender {
@@ -167,7 +167,22 @@
 - (void)addAddon:(OFAddon *)addon toAddonsGroup:(id /* Xcode3Group */) addonsGroup {
 	
 	NSURL * addonURL = [NSURL fileURLWithPath:addon.path];
-	objc_msgSend(addonsGroup, @selector(structureEditInsertFileURLs:atIndex:createGroupsForFolders:), @[addonURL], 0, YES);
+	id newGroups = objc_msgSend(addonsGroup, @selector(structureEditInsertFileURLs:atIndex:createGroupsForFolders:), @[addonURL], 0, YES);
+	id newGroup = [newGroups objectAtIndex:0];
+	
+	// removing top-level stuff that's not "src" or "libs"
+	NSMutableIndexSet * stuffToRemove = [[NSMutableIndexSet alloc] init];
+	NSArray * addonItems = objc_msgSend(newGroup, @selector(subitems));
+	for(NSUInteger i = 0; i < addonItems.count; i++) {
+		NSString * itemName = objc_msgSend(addonItems[i], @selector(name));
+		if([itemName caseInsensitiveCompare:@"src"] != NSOrderedSame &&
+		   [itemName caseInsensitiveCompare:@"libs"] != NSOrderedSame) {
+			[stuffToRemove addIndex:i];
+		}
+	}
+	
+	NSError * err = nil;
+	objc_msgSend(newGroup, @selector(structureEditRemoveSubitemsAtIndexes:error:), stuffToRemove, &err);
 }
 
 #pragma mark - Util
@@ -178,9 +193,7 @@
 	if(root == nil) return nil;
 	
 	NSMutableArray * queue = [[NSMutableArray alloc] init];
-	NSMutableSet * visited = [[NSMutableSet alloc] init];
 	[queue addObject:root];
-	[visited addObject:root];
 	
 	while([queue count] > 0) {
 		id node = [queue objectAtIndex:0];
@@ -192,10 +205,7 @@
 			if([node respondsToSelector:@selector(subitems)]) {
 				NSArray * subitems = objc_msgSend(node, @selector(subitems));
 				for(id item in subitems) {
-					if(![visited containsObject:item]) {
-						[visited addObject:item];
-						[queue addObject:item];
-					}
+					[queue addObject:item];
 				}
 			}
 		}
