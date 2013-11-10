@@ -144,10 +144,11 @@
 		id /* IDEWorkspaceDocument */ document = [[[NSApp keyWindow] windowController] document];
 		id /* IDEWorkspace */ workspace = objc_msgSend(document, @selector(workspace));
 		id /* Xcode3Project */ container = objc_msgSend(workspace, @selector(wrappedXcode3Project));
+		id /* PBXProject */ project = objc_msgSend(container, @selector(pbxProject));
 		id /* Xcode3Group */ addonsGroup = [self findAddonsGroupFromRoot:objc_msgSend(container, @selector(rootGroup))];
 		
 		if(addonsGroup) {
-			[self addAddon:addonMenuItem.addon toAddonsGroup:addonsGroup];
+			[self addAddon:addonMenuItem.addon toGroup:addonsGroup forTargets:objc_msgSend(project, @selector(targets))];
 		} else {
 			[[NSAlert alertWithMessageText:@"Couldn't find an \"addons\" group"
 							 defaultButton:@"Oh, right"
@@ -164,7 +165,7 @@
 	}
 }
 
-- (void)addAddon:(OFAddon *)addon toAddonsGroup:(id /* Xcode3Group */) addonsGroup {
+- (void)addAddon:(OFAddon *)addon toGroup:(id /* Xcode3Group */)addonsGroup forTargets:(NSArray *)targets {
 	
 	NSURL * addonURL = [NSURL fileURLWithPath:addon.path];
 	id newGroups = objc_msgSend(addonsGroup, @selector(structureEditInsertFileURLs:atIndex:createGroupsForFolders:), @[addonURL], 0, YES);
@@ -177,6 +178,36 @@
 	NSMutableSet * foldersToExclude = [NSMutableSet setWithArray:@[@"win32", @"windows", @"linux", @"android"]];
 	[foldersToExclude addObjectsFromArray:[addon foldersToExclude]];
 	[self removeItemsFromGroup:newGroup withSet:foldersToExclude isWhiteList:NO recursive:YES];
+	
+	// add all compilable sources to the relevant targets
+	id /* PBXGroup */ pbxGroup = objc_msgSend(newGroup, @selector(group));
+	id /* PBXGroupEnumerator */ pbxGroupEnumerator = objc_msgSend(pbxGroup, @selector(groupEnumerator));
+	
+	NSMutableArray * sourceFileReferences = [[NSMutableArray alloc] init];
+//	NSMutableArray * libReferences = [[NSMutableArray alloc] init];
+	for(id groupItem in pbxGroupEnumerator) {
+		
+		if([groupItem class] != NSClassFromString(@"PBXFileReference")) continue;
+		
+		if([groupItem respondsToSelector:@selector(fileType)]) {
+			id /* PBXFileType */ fileType = objc_msgSend(groupItem, @selector(fileType));
+			NSString * fileUTI = objc_msgSend(fileType, @selector(UTI));
+			BOOL isSource = [fileUTI rangeOfString:@"source"].location != NSNotFound;
+			
+			if(isSource) {
+				[sourceFileReferences addObject:groupItem];
+			}
+		}
+	}
+	
+	for (id sourceFileReference in sourceFileReferences) {
+		objc_msgSend(targets[0], @selector(addReference:), sourceFileReference);
+	}
+	
+	NSArray * sourcesBuildPhases = objc_msgSend(targets[0], @selector(buildPhasesOfClass:), NSClassFromString(@"PBXSourcesBuildPhase"));
+	for(id phase in sourcesBuildPhases) {
+		objc_msgSend(phase, @selector(insertBuildFiles:atIndex:), sourceFileReferences, 0);
+	}
 }
 
 #pragma mark - Util
@@ -209,7 +240,7 @@
 }
 
 - (void) removeItemsFromGroup:(id)group withSet:(NSSet *)set isWhiteList:(BOOL)whiteList recursive:(BOOL)recursive {
-	
+
 	if(!group || ![group respondsToSelector:@selector(subitems)]) {
 		return;
 	} else {
@@ -219,32 +250,25 @@
 				[self removeItemsFromGroup:item withSet:set isWhiteList:whiteList recursive:YES];
 			}
 		}
-		
 		NSMutableIndexSet * stuffToRemove = [[NSMutableIndexSet alloc] init];
-		
 		for(NSUInteger i = 0; i < subitems.count; i++) {
 			NSString * itemName = objc_msgSend(subitems[i], @selector(name));
 			BOOL shouldRemove = NO;
-			
 			for(NSString * ident in set) {
 				if([itemName rangeOfString:ident].location != NSNotFound) {
 					shouldRemove = YES;
 					break;
 				}
 			}
-			
 			if(whiteList) {
 				shouldRemove = !shouldRemove;
 			}
-			
 			if(shouldRemove) {
 				[stuffToRemove addIndex:i];
 			}
 		}
-		
 		NSError * err = nil;
 		objc_msgSend(group, @selector(structureEditRemoveSubitemsAtIndexes:error:), stuffToRemove, &err);
-		
 		if(err) {
 			NSLog(@"Error when removing %@", err);
 		}
