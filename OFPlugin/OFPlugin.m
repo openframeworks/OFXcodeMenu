@@ -104,8 +104,15 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	return YES;
 }
 
-- (void)showAddonsWebsite:(id)sender {
-	[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://ofxaddons.com"]];
+- (void)showAddonsWebsite:(NSMenuItem *)sender {
+	
+	if(sender == _websiteItem) {
+		[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://ofxaddons.com"]];
+	} else {
+		NSString * searchTerm = [[sender title] stringByReplacingOccurrencesOfString:@"..." withString:@""];
+		NSString * searchURL = [NSString stringWithFormat:@"https://www.google.com/search?q=%@&btnI", searchTerm];
+		[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:searchURL]];
+	}
 }
 
 #pragma mark - Addons directory
@@ -132,6 +139,15 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 					[addonItem setAddon:[OFAddon addonWithPath:addonPath name:addon]];
 					[addonItem setTarget:self];
 					[_addonsListMenu addItem:addonItem];
+					
+					NSMenuItem * alt = [[NSMenuItem alloc] initWithTitle:[addon stringByAppendingString:@"..."]
+																  action:@selector(showAddonsWebsite:)
+														   keyEquivalent:@""];
+					[alt setKeyEquivalentModifierMask:NSAlternateKeyMask];
+					[alt setTarget:self];
+					[alt setEnabled:YES];
+					[alt setAlternate:YES];
+					[_addonsListMenu addItem:alt];
 				}
 			}
 			
