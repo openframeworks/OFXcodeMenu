@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6671EB59182F00040050B812 /* OFAddon.m in Sources */ = {isa = PBXBuildFile; fileRef = 6671EB58182F00040050B812 /* OFAddon.m */; };
+		66B17738182F06CB007AE57F /* OFAddonMenuItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 66B17737182F06CB007AE57F /* OFAddonMenuItem.m */; };
 		66C4B8AA182EB24200C2AA97 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66C4B8A9182EB24200C2AA97 /* AppKit.framework */; };
 		66C4B8AC182EB24200C2AA97 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66C4B8AB182EB24200C2AA97 /* Foundation.framework */; };
 		66C4B8B2182EB24200C2AA97 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 66C4B8B0182EB24200C2AA97 /* InfoPlist.strings */; };
@@ -14,6 +16,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6671EB57182F00040050B812 /* OFAddon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OFAddon.h; sourceTree = "<group>"; };
+		6671EB58182F00040050B812 /* OFAddon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OFAddon.m; sourceTree = "<group>"; };
+		66B17736182F06CB007AE57F /* OFAddonMenuItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OFAddonMenuItem.h; sourceTree = "<group>"; };
+		66B17737182F06CB007AE57F /* OFAddonMenuItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OFAddonMenuItem.m; sourceTree = "<group>"; };
 		66C4B8A6182EB24200C2AA97 /* OFPlugin.xcplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OFPlugin.xcplugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		66C4B8A9182EB24200C2AA97 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		66C4B8AB182EB24200C2AA97 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -37,6 +43,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		66C2FE7C182F0E02002A9D50 /* addons */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = addons;
+			sourceTree = "<group>";
+		};
 		66C4B89D182EB24200C2AA97 = {
 			isa = PBXGroup;
 			children = (
@@ -57,6 +70,7 @@
 		66C4B8A8182EB24200C2AA97 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				66C2FE7C182F0E02002A9D50 /* addons */,
 				66C4B8A9182EB24200C2AA97 /* AppKit.framework */,
 				66C4B8AB182EB24200C2AA97 /* Foundation.framework */,
 			);
@@ -68,6 +82,10 @@
 			children = (
 				66C4B8B3182EB24300C2AA97 /* OFPlugin.h */,
 				66C4B8B4182EB24300C2AA97 /* OFPlugin.m */,
+				6671EB57182F00040050B812 /* OFAddon.h */,
+				6671EB58182F00040050B812 /* OFAddon.m */,
+				66B17736182F06CB007AE57F /* OFAddonMenuItem.h */,
+				66B17737182F06CB007AE57F /* OFAddonMenuItem.m */,
 				66C4B8AE182EB24200C2AA97 /* Supporting Files */,
 			);
 			path = OFPlugin;
@@ -146,6 +164,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				66C4B8B5182EB24300C2AA97 /* OFPlugin.m in Sources */,
+				66B17738182F06CB007AE57F /* OFAddonMenuItem.m in Sources */,
+				6671EB59182F00040050B812 /* OFAddon.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,6 +259,7 @@
 				DSTROOT = "$(HOME)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "OFPlugin/OFPlugin-Prefix.pch";
+				GCC_WARN_UNDECLARED_SELECTOR = NO;
 				INFOPLIST_FILE = "OFPlugin/OFPlugin-Info.plist";
 				INSTALL_PATH = "/Library/Application Support/Developer/Shared/Xcode/Plug-ins";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -254,6 +275,7 @@
 				DSTROOT = "$(HOME)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "OFPlugin/OFPlugin-Prefix.pch";
+				GCC_WARN_UNDECLARED_SELECTOR = NO;
 				INFOPLIST_FILE = "OFPlugin/OFPlugin-Info.plist";
 				INSTALL_PATH = "/Library/Application Support/Developer/Shared/Xcode/Plug-ins";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -280,6 +302,7 @@
 				66C4B8BB182EB24300C2AA97 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

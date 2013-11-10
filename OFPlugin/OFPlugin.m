@@ -2,17 +2,23 @@
 //  OFPlugin.m
 //  OFPlugin
 //
-//  Created by Adam Carlucci on 11/9/2013.
-//    Copyright (c) 2013 lol. All rights reserved.
+//  Created by Adam on 2013-08-14.
+//    Copyright (c) 2013 admsyn. All rights reserved.
 //
 
 #import "OFPlugin.h"
+#import "OFAddon.h"
+#import "OFAddonMenuItem.h"
+#import <objc/objc-runtime.h>
 
-static OFPlugin *sharedPlugin;
+@interface OFPlugin() {
+	NSString * _addonsPath;
+	NSMenu * _addonsListMenu;
+	NSMenuItem * _addAddonItem;
+}
 
-@interface OFPlugin()
+@property (nonatomic, strong) NSBundle * bundle;
 
-@property (nonatomic, strong) NSBundle *bundle;
 @end
 
 @implementation OFPlugin
@@ -21,8 +27,8 @@ static OFPlugin *sharedPlugin;
 {
     static id sharedPlugin = nil;
     static dispatch_once_t onceToken;
-    NSString *currentApplicationName = [[NSBundle mainBundle] infoDictionary][@"CFBundleName"];
-    if ([currentApplicationName isEqual:@"Xcode"]) {
+    NSString * currentAppName = [[NSBundle mainBundle] infoDictionary][@"CFBundleName"];
+    if ([currentAppName isEqual:@"Xcode"]) {
         dispatch_once(&onceToken, ^{
             sharedPlugin = [[self alloc] initWithBundle:plugin];
         });
@@ -30,35 +36,150 @@ static OFPlugin *sharedPlugin;
 }
 
 - (id)initWithBundle:(NSBundle *)plugin {
-{
-    if (self = [super init]) {
-        // reference to plugin's bundle, for resource acccess
-        self.bundle = plugin;
-        
-        // Create menu items, initialize UI, etc.
+	
+	if (self = [super init]) {
+		self.bundle = plugin;
+		
+		NSMenuItem * ofMenuItem = [[NSMenuItem alloc] initWithTitle:@"openFrameworks" action:@selector(menuSelected:) keyEquivalent:@""];
+		[ofMenuItem setTarget:self];
+		
+		NSMenu * topLevelMenu = [[NSMenu alloc] initWithTitle:@"OF"];
+		[ofMenuItem setSubmenu:topLevelMenu];
+		
+		NSMenuItem * addonsPathItem = [topLevelMenu addItemWithTitle:@"Set addons path..." action:@selector(setAddonsPath:) keyEquivalent:@""];
+		[addonsPathItem setTarget:self];
+		[addonsPathItem setEnabled:YES];
+		
+		_addAddonItem = [topLevelMenu addItemWithTitle:@"Add addon" action:@selector(menuSelected:) keyEquivalent:@""];
+		_addonsListMenu = [[NSMenu alloc] initWithTitle:@"addon-list"];
+		[_addAddonItem setTarget:self];
+		
+		_addonsPath = [@"~/workspace/openFrameworks/addons/" stringByExpandingTildeInPath];
+		[_addAddonItem setSubmenu:_addonsListMenu];
+		[self scanAddons];
 
-        // Sample Menu Item:
-        NSMenuItem *menuItem = [[NSApp mainMenu] itemWithTitle:@"File"];
-        if (menuItem) {
-            [[menuItem submenu] addItem:[NSMenuItem separatorItem]];
-            NSMenuItem *actionMenuItem = [[NSMenuItem alloc] initWithTitle:@"Do Action" action:@selector(doMenuAction) keyEquivalent:@""];
-            [actionMenuItem setTarget:self];
-            [[menuItem submenu] addItem:actionMenuItem];
-        }
-    }
-    return self;
+		[[NSApp mainMenu] insertItem:ofMenuItem atIndex:5];
+	}
+	return self;
 }
 
-// Sample Action, for menu item:
-- (void)doMenuAction
+- (void)menuSelected:(id)sender
 {
-    NSAlert *alert = [NSAlert alertWithMessageText:@"Hello, World" defaultButton:nil alternateButton:nil otherButton:nil informativeTextWithFormat:@""];
-    [alert runModal];
+	
 }
 
-- (void)dealloc
+- (void)scanAddons
 {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+	dispatch_async(dispatch_get_main_queue(), ^{
+		[_addonsListMenu removeAllItems];
+		
+		dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+			NSArray * allAddons = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:_addonsPath error:nil];
+			
+			dispatch_async(dispatch_get_main_queue(), ^{
+				NSArray * sortedAddons = [allAddons sortedArrayUsingComparator:^NSComparisonResult(NSString * a, NSString * b) {
+					return [a compare:b];
+				}];
+				
+				for(NSString * addon in sortedAddons) {
+					if([addon rangeOfString:@"ofx"].location != NSNotFound) {
+						OFAddonMenuItem * addonItem = [[OFAddonMenuItem alloc] initWithTitle:addon
+																					  action:@selector(addAddon:)
+																			   keyEquivalent:@""];
+						
+						NSString * addonPath = [NSString stringWithFormat:@"%@/%@/", _addonsPath, addon];
+						[addonItem setAddon:[OFAddon addonWithPath:addonPath name:addon]];
+						[addonItem setTarget:self];
+						[_addonsListMenu addItem:addonItem];
+					}
+				}
+				
+				[_addAddonItem setSubmenu:_addonsListMenu];
+			});
+		});
+	});
+}
+
+// TODO: store last addon path in NSUserDefaults
+- (void)setAddonsPath:(id)sender
+{
+	dispatch_async(dispatch_get_main_queue(), ^{
+		NSOpenPanel * openPanel = [NSOpenPanel openPanel];
+		[openPanel setDirectoryURL:[NSURL fileURLWithPath:[@"~" stringByExpandingTildeInPath]]];
+		[openPanel setCanChooseDirectories:YES];
+		[openPanel setTitle:@"Point me at your addons folder"];
+		[openPanel beginWithCompletionHandler:^(NSInteger result) {
+			NSURL * addonsURL = [[openPanel URLs] objectAtIndex:0];
+			_addonsPath = [addonsURL path];
+			[self scanAddons];
+		}];
+	});
+}
+
+- (void)addAddon:(OFAddonMenuItem *)addonMenuItem
+{
+	@try {
+		id document  = [[[NSApp keyWindow] windowController] document];
+		id workspace = objc_msgSend(document, @selector(workspace));
+		id container = objc_msgSend(workspace, @selector(wrappedXcode3Project));
+		id addonsGroup = [self findAddonsGroupFromRoot:objc_msgSend(container, @selector(rootGroup))];
+		
+		if(addonsGroup) {
+			NSLog(@"adding %@", addonMenuItem.addon.path);
+			NSURL * addonURL = [NSURL fileURLWithPath:addonMenuItem.addon.path];
+			objc_msgSend(addonsGroup,
+						 @selector(structureEditInsertFileURLs:atIndex:createGroupsForFolders:),
+						 @[addonURL],
+						 0,
+						 YES);
+		} else {
+			[[NSAlert alertWithMessageText:@"Couldn't find an addons group"
+							 defaultButton:@"Oh, right"
+						   alternateButton:nil
+							   otherButton:nil
+				 informativeTextWithFormat:@"You should have a group called \"addons\" in your project"] runModal];
+		}
+	}
+	@catch (NSException *exception) {
+		NSLog(@"PROBLEM! : %@", exception);
+	}
+	@finally {
+		
+	}
+}
+
+// breadth first search for a group named "addons"
+- (id) findAddonsGroupFromRoot:(id)root {
+	
+	NSMutableArray * queue = [[NSMutableArray alloc] init];
+	NSMutableSet * visited = [[NSMutableSet alloc] init];
+	[visited addObject:objc_msgSend(root, @selector(name))];
+	[queue addObject:root];
+	
+	while([queue count] > 0) {
+		id node = [queue objectAtIndex:0];
+		[queue removeObjectAtIndex:0];
+		NSString * nodeName = objc_msgSend(node, @selector(name));
+		if([nodeName caseInsensitiveCompare:@"addons"] == NSOrderedSame) {
+			return node;
+		} else {
+			NSArray * subitems = objc_msgSend(node, @selector(subitems));
+			for(id item in subitems) {
+				NSString * itemName = objc_msgSend(item, @selector(name));
+				if(![visited containsObject:itemName]) {
+					[visited addObject:itemName];
+					[queue addObject:item];
+				}
+			}
+		}
+	}
+	
+	return nil;
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
+{
+	return YES;
 }
 
 @end
