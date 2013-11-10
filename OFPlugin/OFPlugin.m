@@ -12,8 +12,11 @@
 #import <objc/objc-runtime.h>
 
 @interface OFPlugin() {
-	NSString * _addonsPath;
+	
+	NSMenu * _OFMenu;
 	NSMenu * _addonsListMenu;
+	NSString * _addonsPath;
+	NSMenuItem * _topLevelMenuItem;
 	NSMenuItem * _addAddonItem;
 }
 
@@ -47,17 +50,17 @@
 #pragma mark - Menu stuffs
 
 - (void)generateMenu {
-	NSMenuItem * ofMenuItem = [[NSMenuItem alloc] initWithTitle:@"openFrameworks" action:@selector(menuSelected:) keyEquivalent:@""];
-	[ofMenuItem setTarget:self];
+	_topLevelMenuItem = [[NSMenuItem alloc] initWithTitle:@"openFrameworks" action:@selector(menuSelected:) keyEquivalent:@""];
+	[_topLevelMenuItem setTarget:self];
 	
-	NSMenu * topLevelMenu = [[NSMenu alloc] initWithTitle:@"OF"];
-	[ofMenuItem setSubmenu:topLevelMenu];
+	_OFMenu = [[NSMenu alloc] initWithTitle:@"OF"];
+	[_topLevelMenuItem setSubmenu:_OFMenu];
 	
-	NSMenuItem * addonsPathItem = [topLevelMenu addItemWithTitle:@"Set addons path..." action:@selector(setAddonsPath:) keyEquivalent:@""];
+	NSMenuItem * addonsPathItem = [_OFMenu addItemWithTitle:@"Set addons path..." action:@selector(setAddonsPath:) keyEquivalent:@""];
 	[addonsPathItem setTarget:self];
 	[addonsPathItem setEnabled:YES];
 	
-	_addAddonItem = [topLevelMenu addItemWithTitle:@"Add addon" action:@selector(menuSelected:) keyEquivalent:@""];
+	_addAddonItem = [_OFMenu addItemWithTitle:@"Add addon" action:@selector(menuSelected:) keyEquivalent:@""];
 	_addonsListMenu = [[NSMenu alloc] initWithTitle:@"addon-list"];
 	[_addAddonItem setTarget:self];
 	
@@ -66,7 +69,7 @@
 	[self scanAddons];
 	
 	NSUInteger menuIndex = [[NSApp mainMenu] indexOfItemWithTitle:@"Navigate"];
-	[[NSApp mainMenu] insertItem:ofMenuItem atIndex:menuIndex > 0 ? menuIndex : 5];
+	[[NSApp mainMenu] insertItem:_topLevelMenuItem atIndex:menuIndex > 0 ? menuIndex : 5];
 }
 
 - (void)menuSelected:(id)sender {
@@ -74,6 +77,13 @@
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+	
+	if(menuItem == _topLevelMenuItem) {
+		[self scanAddons];
+	} else if(menuItem == _addAddonItem) {
+		return _addonsListMenu.itemArray.count > 0;
+	}
+	
 	return YES;
 }
 
@@ -81,32 +91,30 @@
 
 - (void)scanAddons
 {
-	dispatch_async(dispatch_get_main_queue(), ^{
-		[_addonsListMenu removeAllItems];
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+		NSArray * allAddons = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:_addonsPath error:nil];
 		
-		dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-			NSArray * allAddons = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:_addonsPath error:nil];
+		dispatch_async(dispatch_get_main_queue(), ^{
+			NSArray * sortedAddons = [allAddons sortedArrayUsingComparator:^NSComparisonResult(NSString * a, NSString * b) {
+				return [a compare:b];
+			}];
 			
-			dispatch_async(dispatch_get_main_queue(), ^{
-				NSArray * sortedAddons = [allAddons sortedArrayUsingComparator:^NSComparisonResult(NSString * a, NSString * b) {
-					return [a compare:b];
-				}];
-				
-				for(NSString * addon in sortedAddons) {
-					if([addon rangeOfString:@"ofx"].location != NSNotFound) {
-						OFAddonMenuItem * addonItem = [[OFAddonMenuItem alloc] initWithTitle:addon
-																					  action:@selector(addAddonForMenuItem:)
-																			   keyEquivalent:@""];
-						
-						NSString * addonPath = [NSString stringWithFormat:@"%@/%@/", _addonsPath, addon];
-						[addonItem setAddon:[OFAddon addonWithPath:addonPath name:addon]];
-						[addonItem setTarget:self];
-						[_addonsListMenu addItem:addonItem];
-					}
+			[_addonsListMenu removeAllItems];
+			
+			for(NSString * addon in sortedAddons) {
+				if([addon rangeOfString:@"ofx"].location != NSNotFound) {
+					OFAddonMenuItem * addonItem = [[OFAddonMenuItem alloc] initWithTitle:addon
+																				  action:@selector(addAddonForMenuItem:)
+																		   keyEquivalent:@""];
+					
+					NSString * addonPath = [NSString stringWithFormat:@"%@/%@/", _addonsPath, addon];
+					[addonItem setAddon:[OFAddon addonWithPath:addonPath name:addon]];
+					[addonItem setTarget:self];
+					[_addonsListMenu addItem:addonItem];
 				}
-				
-				[_addAddonItem setSubmenu:_addonsListMenu];
-			});
+			}
+			
+			[_addAddonItem setSubmenu:_addonsListMenu];
 		});
 	});
 }
@@ -123,6 +131,7 @@
 			if(result == NSFileHandlingPanelOKButton) {
 				NSURL * addonsURL = [[openPanel URLs] objectAtIndex:0];
 				_addonsPath = [addonsURL path];
+				[_addonsListMenu removeAllItems];
 				[self scanAddons];
 			}
 		}];
