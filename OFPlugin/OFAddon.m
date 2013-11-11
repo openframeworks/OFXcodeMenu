@@ -29,6 +29,8 @@ NSString * const kFrameworksToInclude = @"ADDON_FRAMEWORKS";
     return self;
 }
 
+#pragma mark - Accessors
+
 - (NSArray *)foldersToExclude {
 	return _config[kIncludesToExclude];
 }
@@ -49,7 +51,13 @@ NSString * const kFrameworksToInclude = @"ADDON_FRAMEWORKS";
 	return nil;
 }
 
-- (BOOL)setMetadataFromURL:(NSURL *)addonURL {
+- (NSArray *)systemFrameworks {
+	return _config[kFrameworksToInclude];
+}
+
+#pragma mark - addon_config parsing
+
+- (void)setMetadataFromURL:(NSURL *)addonURL {
 	
 	NSURL * configURL = [addonURL URLByAppendingPathComponent:@"addon_config.mk"];
 	BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:[configURL path]];
@@ -58,15 +66,12 @@ NSString * const kFrameworksToInclude = @"ADDON_FRAMEWORKS";
 		NSString * config = [NSString stringWithContentsOfURL:configURL encoding:NSUTF8StringEncoding error:nil];
 		if(config) {
 			[self parseAddonConfig:config];
-			NSLog(@"%@", _config);
 		}
 	}
-
-	return exists;
 }
 
 - (void) parseAddonConfig:(NSString *)config {
-	NSString * rawSettings = [self rawSettingsSectionForSection:@"osx" inConfig:config];
+	NSString * rawSettings = [self rawSettingsForSection:@"osx" inConfig:config];
 	
 	NSRegularExpression * settingRegex = [NSRegularExpression regularExpressionWithPattern:@"[[A-Z]_]+.*" options:0 error:nil];
 	
@@ -95,8 +100,7 @@ NSString * const kFrameworksToInclude = @"ADDON_FRAMEWORKS";
 	_config[name] = currentSettings;
 }
 
-// TODO: handle errors
-- (NSString *) rawSettingsSectionForSection:(NSString *)section inConfig:(NSString *)config {
+- (NSString *) rawSettingsForSection:(NSString *)section inConfig:(NSString *)config {
 	
 	NSString * regex = [NSString stringWithFormat:@"%@:(.|\\n)*?:", section];
 	NSRegularExpression * expression = [NSRegularExpression regularExpressionWithPattern:regex options:0 error:nil];
