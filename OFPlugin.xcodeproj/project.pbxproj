@@ -258,11 +258,6 @@
 				GCC_WARN_UNDECLARED_SELECTOR = NO;
 				INFOPLIST_FILE = "OFPlugin/OFPlugin-Info.plist";
 				INSTALL_PATH = "/Library/Application Support/Developer/Shared/Xcode/Plug-ins";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/Users/adam/workspace/openFrameworks/addons/ofxOpenCv/libs/opencv/lib/ios,
-					/Users/adam/workspace/openFrameworks/addons/ofxOpenCv/libs/opencv/lib/osx,
-				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = xcplugin;
 			};
@@ -283,11 +278,6 @@
 				GCC_WARN_UNDECLARED_SELECTOR = NO;
 				INFOPLIST_FILE = "OFPlugin/OFPlugin-Info.plist";
 				INSTALL_PATH = "/Library/Application Support/Developer/Shared/Xcode/Plug-ins";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/Users/adam/workspace/openFrameworks/addons/ofxOpenCv/libs/opencv/lib/ios,
-					/Users/adam/workspace/openFrameworks/addons/ofxOpenCv/libs/opencv/lib/osx,
-				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = xcplugin;
 			};

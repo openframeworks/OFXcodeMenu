@@ -209,6 +209,8 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 - (void)addAddon:(OFAddon *)addon toGroup:(id /* Xcode3Group */)addonsGroup andTargets:(NSArray *)targets inProject:(id /* PBXProject */)project {
 	
 	NSURL * addonURL = [NSURL fileURLWithPath:addon.path];
+//	[addon setMetadataFromURL:addonURL]
+	
 	id newGroups = objc_msgSend(addonsGroup, @selector(structureEditInsertFileURLs:atIndex:createGroupsForFolders:), @[addonURL], 0, YES);
 	id newGroup = [newGroups objectAtIndex:0];
 	

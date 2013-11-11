@@ -19,4 +19,7 @@
 @property (nonatomic, readonly) NSArray * extraHeaderSearchPaths;
 @property (nonatomic, readonly) NSArray * extraLibPaths;
 
+// returns YES if it found an addons_config.mk file
+- (BOOL) setMetadataFromURL:(NSURL *)URL;
+
 @end
