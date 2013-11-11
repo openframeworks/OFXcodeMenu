@@ -1,5 +1,15 @@
 #import "OFAddon.h"
 
+NSString * const kSourcesToExclude = @"ADDON_SOURCES_EXCLUDE";
+NSString * const kIncludesToExclude = @"ADDON_INCLUDES_EXCLUDE"; // try not to think about it
+NSString * const kFrameworksToInclude = @"ADDON_FRAMEWORKS";
+
+@interface OFAddon()
+
+@property (nonatomic, strong) NSMutableDictionary * config;
+
+@end
+
 @implementation OFAddon
 
 + (id) addonWithPath:(NSString *)path name:(NSString *)name
@@ -10,8 +20,17 @@
 	return a;
 }
 
+- (id)init
+{
+    self = [super init];
+    if (self) {
+        _config = [[NSMutableDictionary alloc] init];
+    }
+    return self;
+}
+
 - (NSArray *)foldersToExclude {
-	return nil;
+	return _config[kIncludesToExclude];
 }
 
 - (NSArray *)extraHeaderSearchPaths {
@@ -39,53 +58,75 @@
 		NSString * config = [NSString stringWithContentsOfURL:configURL encoding:NSUTF8StringEncoding error:nil];
 		if(config) {
 			[self parseAddonConfig:config];
+			NSLog(@"%@", _config);
 		}
 	}
-	
+
 	return exists;
 }
 
 - (void) parseAddonConfig:(NSString *)config {
-	NSString * settings = [self osxSettingsInConfig:config];
-	NSLog(@"found addon settings: %@", settings);
+	NSString * rawSettings = [self rawSettingsSectionForSection:@"osx" inConfig:config];
+	
+	NSRegularExpression * settingRegex = [NSRegularExpression regularExpressionWithPattern:@"[[A-Z]_]+.*" options:0 error:nil];
+	
+	[settingRegex enumerateMatchesInString:rawSettings
+								   options:0
+									 range:NSMakeRange(0, rawSettings.length)
+								usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
+									[self parseSetting:[rawSettings substringWithRange:result.range]];
+								}];
+}
+
+- (void) parseSetting:(NSString *)setting {
+	NSString * name = [self firstHitForRegex:@"[[A-Z]_]+" inString:setting];
+	NSString * operator = [self firstHitForRegex:@"(\\+|=)+" inString:setting];
+	NSString * content = [self firstHitForRegex:@"[^\\s|=]+$" inString:setting];
+	content = [content stringByReplacingOccurrencesOfString:@"%" withString:@""]; // need to strip '%'s
+	BOOL append = [operator rangeOfString:@"+="].location != NSNotFound;
+	
+	NSMutableArray * currentSettings = _config[name];
+	
+	if(!currentSettings || !append) {
+		currentSettings = [[NSMutableArray alloc] init];
+	}
+	
+	[currentSettings addObject:content];
+	_config[name] = currentSettings;
 }
 
 // TODO: handle errors
-- (NSString *) osxSettingsInConfig:(NSString *)config {
-	NSError * err = nil;
-	NSRegularExpression * osxSectionRegex = [NSRegularExpression regularExpressionWithPattern:@"osx:(.|\\n)*?:"
-																					  options:NSRegularExpressionCaseInsensitive
-																						error:&err];
+- (NSString *) rawSettingsSectionForSection:(NSString *)section inConfig:(NSString *)config {
+	
+	NSString * regex = [NSString stringWithFormat:@"%@:(.|\\n)*?:", section];
+	NSRegularExpression * expression = [NSRegularExpression regularExpressionWithPattern:regex options:0 error:nil];
 	
 	__block NSString * relevantSection = nil;
-	[osxSectionRegex enumerateMatchesInString:config
-									  options:0
-										range:NSMakeRange(0, config.length)
-								   usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
+	[expression enumerateMatchesInString:config
+								 options:0
+								   range:NSMakeRange(0, config.length)
+							  usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
 	 {
 		 relevantSection = [config substringWithRange:result.range];
 		 *stop = YES;
 	 }];
 	
-	NSRegularExpression * labelsRegex = [NSRegularExpression regularExpressionWithPattern:@".*?:"
-																				  options:NSRegularExpressionCaseInsensitive
-																					error:&err];
-	
-	NSString * noLabels = [labelsRegex stringByReplacingMatchesInString:relevantSection
-																options:0
-																  range:NSMakeRange(0, relevantSection.length)
-														   withTemplate:@""];
-	
-	NSRegularExpression * commentsRegex = [NSRegularExpression regularExpressionWithPattern:@".*?\\#.*"
-																					options:0
-																					  error:&err];
-	
-	NSString * noComments = [commentsRegex stringByReplacingMatchesInString:noLabels
-																	options:0
-																	  range:NSMakeRange(0, noLabels.length)
-															   withTemplate:@""];
-	
-	return noComments;
+	relevantSection = [self stringRemovingAllHitsForRegex:@".*?:" fromString:relevantSection]; // remove labels
+	relevantSection = [self stringRemovingAllHitsForRegex:@".*?\\#.*" fromString:relevantSection]; // remove comments
+	return relevantSection;
+}
+
+#pragma mark - Util
+
+- (NSString *) firstHitForRegex:(NSString *)regex inString:(NSString *)string {
+	NSRegularExpression * expression = [NSRegularExpression regularExpressionWithPattern:regex options:0 error:nil];
+	NSRange range = [expression rangeOfFirstMatchInString:string options:0 range:NSMakeRange(0, string.length)];
+	return (range.location == NSNotFound ? nil : [string substringWithRange:range]);
+}
+
+- (NSString *) stringRemovingAllHitsForRegex:(NSString *)regex fromString:(NSString *)string {
+	NSRegularExpression * expression = [NSRegularExpression regularExpressionWithPattern:regex options:0 error:nil];
+	return [expression stringByReplacingMatchesInString:string options:0 range:NSMakeRange(0, string.length) withTemplate:@""];
 }
 
 @end
