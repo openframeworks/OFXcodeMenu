@@ -3,6 +3,8 @@ OFPlugin
 
 OpenFrameworks plugin for Xcode 5. It adds addons to open projects.
 
+You can get a pre-compiled version of this addon at [adamcarlucci.com/ofplugin.zip](http://adamcarlucci.com/ofplugin.zip)
+
 Building the included Xcode project will install the plugin. To do it manually, put OFPlugin.xcplugin in ~/Library/Application Support/Developer/Shared/Xcode/Plug-ins/OFPlugin.xcplugin (to uninstall, just remove it from there. Obviously.)
 
 In theory it'll work on Xcode 4 as well, but you'll need to enable garbage collection when building the plugin.
