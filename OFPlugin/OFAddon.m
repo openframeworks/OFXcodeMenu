@@ -3,6 +3,8 @@
 NSString * const kSourcesToExclude = @"ADDON_SOURCES_EXCLUDE";
 NSString * const kIncludesToExclude = @"ADDON_INCLUDES_EXCLUDE"; // try not to think about it
 NSString * const kFrameworksToInclude = @"ADDON_FRAMEWORKS";
+NSString * const kIncludes = @"ADDON_INCLUDES";
+NSString * const kURL = @"ADDON_URL";
 
 @interface OFAddon()
 
@@ -31,17 +33,27 @@ NSString * const kFrameworksToInclude = @"ADDON_FRAMEWORKS";
 
 #pragma mark - Accessors
 
-- (NSArray *)foldersToExclude {
+- (NSString *) url {
+	return [_config[kURL] objectAtIndex:0];
+}
+
+- (NSArray *)sourceFoldersToExclude {
+	return _config[kSourcesToExclude];
+}
+
+- (NSArray *)includeFoldersToExclude {
 	return _config[kIncludesToExclude];
 }
 
 - (NSArray *)extraHeaderSearchPaths {
 	
-	if([self.name isEqualToString:@"ofxCv"]) {
+	// ofxCv doesn't have an addons_config right now, but we'll check anyway to future-proof it
+	if([self.name isEqualToString:@"ofxCv"] && !_config[kIncludes]) {
 		return @[@"../../../addons/ofxOpenCv/libs/opencv/include/",
 				 @"../../../addons/ofxCv/libs/ofxCv/include/"];
+	} else {
+		return _config[kIncludes];
 	}
-	return nil;
 }
 
 - (NSArray *)extraLibPaths {
@@ -68,26 +80,31 @@ NSString * const kFrameworksToInclude = @"ADDON_FRAMEWORKS";
 			[self parseAddonConfig:config];
 		}
 	}
+	
+	NSLog(@"%@", _config);
 }
 
 - (void) parseAddonConfig:(NSString *)config {
-	NSString * rawSettings = [self rawSettingsForSection:@"osx" inConfig:config];
 	
-	NSRegularExpression * settingRegex = [NSRegularExpression regularExpressionWithPattern:@"[[A-Z]_]+.*" options:0 error:nil];
-	
-	[settingRegex enumerateMatchesInString:rawSettings
-								   options:0
-									 range:NSMakeRange(0, rawSettings.length)
-								usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
-									[self parseSetting:[rawSettings substringWithRange:result.range]];
-								}];
+	NSArray * sections = @[@"meta", @"common", @"osx"];
+	for(NSString * section in sections) {
+		NSString * rawSettings = [self rawSettingsForSection:section inConfig:config];
+		NSRegularExpression * settingRegex = [NSRegularExpression regularExpressionWithPattern:@"[[A-Z]_]+.*" options:0 error:nil];
+		[settingRegex enumerateMatchesInString:rawSettings
+									   options:0
+										 range:NSMakeRange(0, rawSettings.length)
+									usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
+										[self parseSetting:[rawSettings substringWithRange:result.range]];
+									}];
+
+	}
 }
 
 - (void) parseSetting:(NSString *)setting {
 	NSString * name = [self firstHitForRegex:@"[[A-Z]_]+" inString:setting];
 	NSString * operator = [self firstHitForRegex:@"(\\+|=)+" inString:setting];
-	NSString * content = [self firstHitForRegex:@"[^\\s|=]+$" inString:setting];
-	content = [content stringByReplacingOccurrencesOfString:@"%" withString:@""]; // need to strip '%'s
+	NSString * content = [self firstHitForRegex:@"[^=]+$" inString:setting];
+	content = [content stringByReplacingOccurrencesOfString:@"/%" withString:@""]; // need to strip '/%'s
 	BOOL append = [operator rangeOfString:@"+="].location != NSNotFound;
 	
 	NSMutableArray * currentSettings = _config[name];
@@ -96,13 +113,13 @@ NSString * const kFrameworksToInclude = @"ADDON_FRAMEWORKS";
 		currentSettings = [[NSMutableArray alloc] init];
 	}
 	
-	[currentSettings addObject:content];
+	[currentSettings addObject:[content stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
 	_config[name] = currentSettings;
 }
 
 - (NSString *) rawSettingsForSection:(NSString *)section inConfig:(NSString *)config {
 	
-	NSString * regex = [NSString stringWithFormat:@"%@:(.|\\n)*?:", section];
+	NSString * regex = [NSString stringWithFormat:@"%@:(.|\\n)*?\n[a-z]+:", section];
 	NSRegularExpression * expression = [NSRegularExpression regularExpressionWithPattern:regex options:0 error:nil];
 	
 	__block NSString * relevantSection = nil;
@@ -115,8 +132,12 @@ NSString * const kFrameworksToInclude = @"ADDON_FRAMEWORKS";
 		 *stop = YES;
 	 }];
 	
-	relevantSection = [self stringRemovingAllHitsForRegex:@".*?:" fromString:relevantSection]; // remove labels
+	
+	NSLog(@"A %@", relevantSection);
+	relevantSection = [self stringRemovingAllHitsForRegex:@"\n[a-z]+:.*" fromString:relevantSection]; // remove labels
+	NSLog(@"B %@", relevantSection);
 	relevantSection = [self stringRemovingAllHitsForRegex:@".*?\\#.*" fromString:relevantSection]; // remove comments
+	NSLog(@"C %@", relevantSection);
 	return relevantSection;
 }
 

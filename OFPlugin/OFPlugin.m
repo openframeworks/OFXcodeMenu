@@ -101,9 +101,17 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	if(sender == _websiteItem) {
 		[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://ofxaddons.com"]];
 	} else {
-		NSString * searchTerm = [[sender title] stringByReplacingOccurrencesOfString:@"..." withString:@""];
-		NSString * searchURL = [NSString stringWithFormat:@"https://www.google.com/search?q=%@&btnI", searchTerm];
-		[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:searchURL]];
+		if([sender respondsToSelector:@selector(addon)]) {
+			OFAddon * addon = [(OFAddonMenuItem *)sender addon];
+			[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path]];
+			if(addon.url) {
+				[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:addon.url]];
+			}
+		} else {
+			NSString * searchTerm = [[sender title] stringByReplacingOccurrencesOfString:@"..." withString:@""];
+			NSString * searchURL = [NSString stringWithFormat:@"https://www.google.com/search?q=%@&btnI", searchTerm];
+			[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:searchURL]];
+		}
 	}
 }
 
@@ -132,13 +140,15 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 					[addonItem setTarget:self];
 					[_addonsListMenu addItem:addonItem];
 					
-					NSMenuItem * alt = [[NSMenuItem alloc] initWithTitle:[addon stringByAppendingString:@"..."]
-																  action:@selector(showAddonsWebsite:)
-														   keyEquivalent:@""];
+					OFAddonMenuItem * alt = [[OFAddonMenuItem alloc] initWithTitle:[addon stringByAppendingString:@"..."]
+																			action:@selector(showAddonsWebsite:)
+																	 keyEquivalent:@""];
+					
 					[alt setKeyEquivalentModifierMask:NSAlternateKeyMask];
 					[alt setTarget:self];
 					[alt setEnabled:YES];
 					[alt setAlternate:YES];
+					[alt setAddon:addonItem.addon];
 					[_addonsListMenu addItem:alt];
 				}
 			}
@@ -185,6 +195,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		id /* Xcode3Project */ container = objc_msgSend(workspace, @selector(wrappedXcode3Project));
 		id /* PBXProject */ project = objc_msgSend(container, @selector(pbxProject));
 		id /* Xcode3Group */ addonsGroup = [self findAddonsGroupFromRoot:objc_msgSend(container, @selector(rootGroup))];
+		[addonMenuItem.addon setMetadataFromURL:[NSURL fileURLWithPath:addonMenuItem.addon.path]];
 		
 		if(addonsGroup) {
 			NSArray * targets = objc_msgSend(project, @selector(targets));
@@ -208,30 +219,63 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 - (void)addAddon:(OFAddon *)addon toGroup:(id /* Xcode3Group */)addonsGroup andTargets:(NSArray *)targets inProject:(id /* PBXProject */)project {
 	
-	NSURL * addonURL = [NSURL fileURLWithPath:addon.path];
-	[addon setMetadataFromURL:addonURL];
+	id /* PBXGroup */ addonsPbxGroup = objc_msgSend(addonsGroup, @selector(group));
+    id /* PBXGroup */ newPbxGroup = objc_msgSend(NSClassFromString(@"PBXGroup"), @selector(groupWithName:), addon.name);
+	[addonsPbxGroup insertItem:newPbxGroup atIndex:0];
 	
-	id newGroups = objc_msgSend(addonsGroup, @selector(structureEditInsertFileURLs:atIndex:createGroupsForFolders:), @[addonURL], 0, YES);
-	id newGroup = [newGroups objectAtIndex:0];
+	// add "src" and "libs"
+	objc_msgSend(newPbxGroup, @selector(addFiles:copy:createGroupsRecursively:), [self srcAndLibsFoldersForAddon:addon], NO, YES);
 	
-	// remove all top-level stuff that's NOT "src" or "libs" (e.g. examples, thumbnails)
-	[self removeItemsFromGroup:newGroup withSet:[NSSet setWithArray:@[@"src", @"libs"]] isWhiteList:YES recursive:NO];
+	// add any system frameworks
+	objc_msgSend(newPbxGroup, @selector(addFiles:copy:createGroupsRecursively:), [self systemFrameworksForAddon:addon], NO, YES);
 	
-	// add any external libs the addon says it needs
-	NSArray * extraLibs = addon.extraLibPaths;
-	NSString * projectPath = [objc_msgSend(project, @selector(path)) stringByDeletingLastPathComponent];
-	for(NSString * libPath in extraLibs) {
-		NSString * fullLibPath = [NSString stringWithFormat:@"%@/%@", projectPath, libPath];
-		NSURL * libURL = [NSURL fileURLWithPath:fullLibPath];
-		objc_msgSend(newGroup, @selector(structureEditInsertFileURLs:atIndex:createGroupsForFolders:), @[libURL], 0, YES);
+	// remove stuff excluded by addons_config.mk
+	[self recursivelyRemoveFilesInGroup:newPbxGroup forAddon:addon path:@""];
+	
+	// add all the new stuff to the project's build phases in all targets
+	[self addSourceFilesAndLibsFromGroup:newPbxGroup toTargets:targets];
+	
+	// add any external header search paths the addon requires
+	[self modifyBuildSettingsInTargets:targets forAddon:addon];
+}
+
+#pragma mark - Util
+
+- (void) recursivelyRemoveFilesInGroup:(id /* PBXGroup */)group forAddon:(OFAddon *)addon path:(NSString *)path {
+	
+	Class groupClass = NSClassFromString(@"PBXGroup");
+	
+	if(!group || [group class] != groupClass) {
+		return;
+	} else {
+		__block NSMutableIndexSet * childrenToRemove = [[NSMutableIndexSet alloc] init];
+		
+		[[group children] enumerateObjectsUsingBlock:^(id child, NSUInteger idx, BOOL *stop) {
+			if([child class] == groupClass) {
+				NSString * seperator = [path isEqualToString:@""] ? @"" : @"/";
+				NSString * nextPath = [[path stringByAppendingString:seperator] stringByAppendingString:[child name]];
+				[self recursivelyRemoveFilesInGroup:child forAddon:addon path:nextPath];
+			}
+			
+			NSString * childPath = [[path stringByAppendingString:@"/"] stringByAppendingString:[child name]];
+			
+			for(NSString * exclusionPrefix in addon.sourceFoldersToExclude) {
+				if([childPath hasPrefix:exclusionPrefix]) {
+					[childrenToRemove addIndex:idx];
+				}
+			}
+			
+			for(NSString * exclusionPrefix in addon.headerFoldersToExclude) {
+				if([childPath hasPrefix:exclusionPrefix]) {
+					[childrenToRemove addIndex:idx];
+				}
+			}
+		}];
+		
+		if(childrenToRemove.count > 0) {
+			objc_msgSend(group, @selector(removeItemsAtIndexes:), childrenToRemove);
+		}
 	}
-	
-	// remove anything that identifies as being non-osx / non-ios
-	NSMutableSet * foldersToExclude = [NSMutableSet setWithArray:@[@"win32", @"windows", @"vs", @"win_cb", @"linux", @"android"]];
-	[foldersToExclude addObjectsFromArray:[addon foldersToExclude]];
-	[self removeItemsFromGroup:newGroup withSet:foldersToExclude isWhiteList:NO recursive:YES];
-	
-	[self addSourceFilesAndLibsFromGroup:newGroup toTargets:targets];
 }
 
 - (void)modifyBuildSettingsInTargets:(NSArray * /* PBXTarget */)targets forAddon:(OFAddon *)addon {
@@ -249,8 +293,6 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		objc_msgSend(configurationList, @selector(invalidateCaches));
 	}
 }
-
-#pragma mark - Util
 
 // breadth first search for a group named "addons"
 - (id) findAddonsGroupFromRoot:(id /* Xcode3Group */)root {
@@ -279,54 +321,16 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	return nil;
 }
 
-- (void) removeItemsFromGroup:(id)group withSet:(NSSet *)set isWhiteList:(BOOL)whiteList recursive:(BOOL)recursive {
-
-	if(!group || ![group respondsToSelector:@selector(subitems)]) {
-		return;
-	} else {
-		NSArray * subitems = objc_msgSend(group, @selector(subitems));
-		if(recursive) {
-			for(id item in subitems) {
-				[self removeItemsFromGroup:item withSet:set isWhiteList:whiteList recursive:YES];
-			}
-		}
-		NSMutableIndexSet * stuffToRemove = [[NSMutableIndexSet alloc] init];
-		for(NSUInteger i = 0; i < subitems.count; i++) {
-			NSString * itemName = objc_msgSend(subitems[i], @selector(name));
-			BOOL shouldRemove = NO;
-			for(NSString * ident in set) {
-				if([itemName rangeOfString:ident].location != NSNotFound) {
-					shouldRemove = YES;
-					break;
-				}
-			}
-			if(whiteList) {
-				shouldRemove = !shouldRemove;
-			}
-			if(shouldRemove) {
-				[stuffToRemove addIndex:i];
-			}
-		}
-		NSError * err = nil;
-		objc_msgSend(group, @selector(structureEditRemoveSubitemsAtIndexes:error:), stuffToRemove, &err);
-		if(err) {
-			NSLog(@"Error when removing %@", err);
-		}
-	}
-}
-
 - (void) addSourceFilesAndLibsFromGroup:(id /* Xcode3Group */)group toTargets:(NSArray *)targets {
 	
-	id /* PBXGroup */ pbxGroup = objc_msgSend(group, @selector(group));
-	id /* PBXGroupEnumerator */ pbxGroupEnumerator = objc_msgSend(pbxGroup, @selector(groupEnumerator));
+	id /* PBXGroupEnumerator */ pbxGroupEnumerator = objc_msgSend(group, @selector(groupEnumerator));
 	
 	NSMutableArray * referencesToAdd = [[NSMutableArray alloc] init];
 	for(id item in pbxGroupEnumerator) {
-		if([self shouldAddItem:item]) {
+		if([self shouldAddItemToTarget:item]) {
 			[referencesToAdd addObject:item];
 		}
 	}
-	
 	// add source file, library and framework references to all targets
 	for(id target in targets) {
 		for (id ref in referencesToAdd) {
@@ -335,7 +339,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 }
 
-- (BOOL) shouldAddItem:(id)item {
+- (BOOL) shouldAddItemToTarget:(id)item {
 	
 	if([item class] != NSClassFromString(@"PBXFileReference")) return NO;
 	
@@ -343,7 +347,6 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	NSString * fileUTI = objc_msgSend(fileType, @selector(UTI));
 	
 	if([fileUTI rangeOfString:@"source"].location != NSNotFound || // is a source file?
-	   [fileUTI rangeOfString:@"header"].location != NSNotFound || // is a header?
 	   ((BOOL (*)(id, SEL))objc_msgSend)(fileType, @selector(isStaticLibrary)) || // is a static lib?
 	   ((BOOL (*)(id, SEL))objc_msgSend)(fileType, @selector(isFramework))) // is a framework?
 	{
@@ -367,6 +370,24 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 	
 	objc_msgSend(table, @selector(setObject:forKeyedSubscript:), modifiedPaths, setting);
+}
+
+- (NSArray *) srcAndLibsFoldersForAddon:(OFAddon *)addon {
+	NSArray * paths = @[[addon.path stringByAppendingString:@"src"],
+						[addon.path stringByAppendingString:@"libs"]];
+	
+	NSMutableArray * folders = [[NSMutableArray alloc] init];
+	for(NSString * path in paths) {
+		if([[NSFileManager defaultManager] fileExistsAtPath:path]) {
+			[folders addObject:path];
+		}
+	}
+	return folders;
+}
+
+- (NSArray *) systemFrameworksForAddon:(OFAddon *)addon {
+	
+	return nil;
 }
 
 @end
