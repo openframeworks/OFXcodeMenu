@@ -111,7 +111,10 @@ NSString * const kURL = @"ADDON_URL";
 		currentSettings = [[NSMutableArray alloc] init];
 	}
 	
-	[currentSettings addObject:[content stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
+	if(content) {
+		[currentSettings addObject:[content stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
+	}
+	
 	_config[name] = currentSettings;
 }
 
