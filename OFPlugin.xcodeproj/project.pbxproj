@@ -249,21 +249,12 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEPLOYMENT_LOCATION = YES;
 				DSTROOT = "$(HOME)";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					/Users/adam/workspace/openFrameworks/addons/ofxSyphon/libs/Syphon/lib/osx,
-				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "OFPlugin/OFPlugin-Prefix.pch";
 				GCC_WARN_UNDECLARED_SELECTOR = NO;
 				INFOPLIST_FILE = "OFPlugin/OFPlugin-Info.plist";
 				INSTALL_PATH = "/Library/Application Support/Developer/Shared/Xcode/Plug-ins";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"/Users/adam/workspace/openFrameworks/addons/ofxKinect/libs/libusb-1.0/lib/osx",
-				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "../../../addons/ofxOpenCv/libs/opencv/include/ ../../../addons/ofxCv/libs/ofxCv/include/";
 				WRAPPER_EXTENSION = xcplugin;
 			};
 			name = Debug;
@@ -274,21 +265,12 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEPLOYMENT_LOCATION = YES;
 				DSTROOT = "$(HOME)";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					/Users/adam/workspace/openFrameworks/addons/ofxSyphon/libs/Syphon/lib/osx,
-				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "OFPlugin/OFPlugin-Prefix.pch";
 				GCC_WARN_UNDECLARED_SELECTOR = NO;
 				INFOPLIST_FILE = "OFPlugin/OFPlugin-Info.plist";
 				INSTALL_PATH = "/Library/Application Support/Developer/Shared/Xcode/Plug-ins";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"/Users/adam/workspace/openFrameworks/addons/ofxKinect/libs/libusb-1.0/lib/osx",
-				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "../../../addons/ofxOpenCv/libs/opencv/include/ ../../../addons/ofxCv/libs/ofxCv/include/";
 				WRAPPER_EXTENSION = xcplugin;
 			};
 			name = Release;

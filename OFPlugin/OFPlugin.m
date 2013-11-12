@@ -281,15 +281,15 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		[msg deleteCharactersInRange:NSMakeRange(msg.length - 2, 2)];
 		
 		NSAlert * a = [NSAlert alertWithMessageText:@"Unresolved dependencies"
-									  defaultButton:@"Clone them!"
-									alternateButton:@"I'll get them myself"
+									  defaultButton:@"Get them!"
+									alternateButton:@"I'll do it myself"
 										otherButton:nil
 						  informativeTextWithFormat:@"This addon has the following dependencies: %@", msg];
 		
 		[a beginSheetModalForWindow:[NSApp keyWindow]
 					  modalDelegate:self
 					 didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:)
-						contextInfo:(__bridge_retained void *)(unresolvedDependencies)];
+						contextInfo:(__bridge_retained void *)(@{@"deps":unresolvedDependencies, @"addon":addon})];
 	}
 }
 
@@ -451,7 +451,8 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 - (void) alertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo {
 	
-	NSArray * dependencies = (__bridge_transfer NSArray *)(contextInfo);
+	NSDictionary * ctx = (__bridge_transfer NSDictionary *)(contextInfo);
+	NSArray * dependencies = ctx[@"deps"];
 	if(returnCode == NSAlertDefaultReturn) {
 		NSURL * jsonURL = [NSURL URLWithString:@"http://ofxaddons.com/api/v1/all.json"];
 		NSURLRequest * req = [NSURLRequest requestWithURL:jsonURL];
@@ -464,7 +465,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 								   if(data) {
 									   [self printToConsole:@"done!\n"];
 									   id jsonObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-									   [self cloneDependencies:dependencies withJSON:jsonObject];
+									   [self cloneDependencies:dependencies forAddon:ctx[@"addon"] withJSON:jsonObject];
 								   } else {
 									   [self printToConsole:@"request failed"];
 								   }
@@ -472,32 +473,75 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 }
 
-- (void) cloneDependencies:(NSArray *)dependencies withJSON:(NSDictionary *)json {
+- (void) cloneDependencies:(NSArray *)dependencies forAddon:(OFAddon *)addon withJSON:(NSDictionary *)json {
 	
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+		
+		NSString * owner = nil;
+		for(NSDictionary * repo in json[@"repos"]) {
+			if([repo[@"name"] isEqualToString:addon.name]) {
+				owner = repo[@"owner"];
+			}
+		}
+		
+		// figure out which repos to clone
+		NSMutableArray * reposToClone = [[NSMutableArray alloc] init];
 		for(NSString * dep in dependencies) {
+			NSMutableArray * candidates = [[NSMutableArray alloc] init];
+			
 			for(NSDictionary * repo in json[@"repos"]) {
 				if ([repo[@"name"] isEqualToString:dep] && repo[@"clone_url"]) {
-					
-					[self printToConsole:[NSString stringWithFormat:@"cloning %@ ... ", repo[@"name"]]];
-					
-					NSTask * cloneTask = [[NSTask alloc] init];
-					[cloneTask setLaunchPath:@"/usr/bin/git"];
-					[cloneTask setCurrentDirectoryPath:_addonsPath];
-					[cloneTask setArguments:@[@"clone", repo[@"clone_url"]]];
-					[cloneTask launch];
-					[cloneTask waitUntilExit];
-					
-					[self printToConsole:[NSString stringWithFormat:@"done!\n"]];
-					
-					dispatch_async(dispatch_get_main_queue(), ^{
-						OFAddon * newAddon = [OFAddon addonWithPath:[self pathForAddonWithName:dep] name:dep];
-						[self addAddon:newAddon];
-					});
-					
-					break;
+					[candidates addObject:repo];
 				}
 			}
+			
+			if(candidates.count == 0) {
+				[self printToConsole:[NSString stringWithFormat:@"couldn't find repo for %@\n", dep]];
+			} else if(candidates.count == 1) {
+				[reposToClone addObject:candidates[0]];
+			} else {
+				NSDictionary * chosenCandidate = nil;
+				
+				// search for a fork by the same owner
+				for(NSDictionary * candidate in candidates) {
+					if([candidate[@"owner"] isEqualToString:owner]) {
+						NSLog(@"owner: %@", candidate);
+						chosenCandidate = candidate;
+					}
+				}
+				
+				// search for the most recently updated fork
+				if(!chosenCandidate) {
+					[candidates sortUsingComparator:^NSComparisonResult(NSDictionary * a, NSDictionary * b) {
+						NSDate * aDate = [NSDate dateWithString:a[@"last_pushed_at"]];
+						NSDate * bDate = [NSDate dateWithString:b[@"last_pushed_at"]];
+						return [aDate compare:bDate];
+					}];
+					
+					chosenCandidate = [candidates lastObject];
+				}
+				
+				[reposToClone addObject:chosenCandidate];
+			}
+		}
+		
+		// do the cloning
+		for(NSDictionary * repo in reposToClone) {
+			NSString * repoName = repo[@"name"];
+			[self printToConsole:[NSString stringWithFormat:@"cloning %@ ... ", repoName]];
+			
+			NSTask * cloneTask = [[NSTask alloc] init];
+			[cloneTask setLaunchPath:@"/usr/bin/git"];
+			[cloneTask setCurrentDirectoryPath:_addonsPath];
+			[cloneTask setArguments:@[@"clone", repo[@"clone_url"]]];
+			[cloneTask launch];
+			[cloneTask waitUntilExit];
+			
+			[self printToConsole:[NSString stringWithFormat:@"done!\n"]];
+			
+			dispatch_async(dispatch_get_main_queue(), ^{
+				[self addAddon:[OFAddon addonWithPath:[self pathForAddonWithName:repoName] name:repoName]];
+			});
 		}
 		
 		[self printToConsole:@"done cloning\n"];
