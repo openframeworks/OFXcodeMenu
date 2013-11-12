@@ -401,6 +401,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	NSString * fileUTI = objc_msgSend(fileType, @selector(UTI));
 	
 	if([fileUTI rangeOfString:@"source"].location != NSNotFound || // is a source file?
+	   [fileUTI rangeOfString:@"header"].location != NSNotFound || // is a header file?
 	   ((BOOL (*)(id, SEL))objc_msgSend)(fileType, @selector(isStaticLibrary)) || // is a static lib?
 	   ((BOOL (*)(id, SEL))objc_msgSend)(fileType, @selector(isFramework))) // is a framework?
 	{

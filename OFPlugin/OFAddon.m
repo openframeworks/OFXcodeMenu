@@ -39,7 +39,14 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 }
 
 - (NSArray *)sourceFoldersToExclude {
-	return _config[kSourcesToExclude];
+	
+	if(_config[kSourcesToExclude]) {
+		return _config[kSourcesToExclude];
+	} else if([self.name isEqualToString:@"ofxOsc"] && !_config[kIncludes]) {
+		return @[@"libs/oscpack/src/ip/win32"];
+	}
+	
+	return nil;
 }
 
 - (NSArray *)includeFoldersToExclude {
@@ -51,25 +58,15 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 }
 
 - (NSArray *)extraHeaderSearchPaths {
-
-	// ofxCv doesn't have an addons_config right now, but we'll check anyway to future-proof it
-	if([self.name isEqualToString:@"ofxCv"] && !_config[kIncludes]) {
-		return @[@"../../../addons/ofxOpenCv/libs/opencv/include/",
-				 @"../../../addons/ofxCv/libs/ofxCv/include/"];
-	} else
-
-		if([self.name isEqualToString:@"ofxOsc"] && !_config[kIncludes]) {
-			return @[@"../../../addons/ofxOsc/libs",
-					 @"../../../addons/ofxOsc/libs/oscpack",
-					 @"../../../addons/ofxOsc/libs/oscpack/src",
-					 @"../../../addons/ofxOsc/libs/oscpack/src/ip",
-					 @"../../../addons/ofxOsc/libs/oscpack/src/ip/posix",
-					 @"../../../addons/ofxOsc/libs/oscpack/src/ip/win32",
-					 @"../../../addons/ofxOsc/libs/oscpack/src/osc",
-					 @"../../../addons/ofxOsc/src"];
-		} else {
-			return _config[kIncludes];
-		}
+	if(_config[kIncludes]) {
+		return _config[kIncludes];
+	} else if([self.name isEqualToString:@"ofxCv"]) {
+		return @[@"../../../addons/ofxOpenCv/libs/opencv/include/", @"../../../addons/ofxCv/libs/ofxCv/include/"];
+	} else if([self.name isEqualToString:@"ofxOsc"]){
+		return @[@"../../../addons/ofxOsc/libs/oscpack/src/"];
+	} else {
+		return nil;
+	}
 }
 
 - (NSArray *)extraLibPaths {
