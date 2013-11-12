@@ -51,14 +51,25 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 }
 
 - (NSArray *)extraHeaderSearchPaths {
-	
+
 	// ofxCv doesn't have an addons_config right now, but we'll check anyway to future-proof it
 	if([self.name isEqualToString:@"ofxCv"] && !_config[kIncludes]) {
 		return @[@"../../../addons/ofxOpenCv/libs/opencv/include/",
 				 @"../../../addons/ofxCv/libs/ofxCv/include/"];
-	} else {
-		return _config[kIncludes];
-	}
+	} else
+
+		if([self.name isEqualToString:@"ofxOsc"] && !_config[kIncludes]) {
+			return @[@"../../../addons/ofxOsc/libs",
+					 @"../../../addons/ofxOsc/libs/oscpack",
+					 @"../../../addons/ofxOsc/libs/oscpack/src",
+					 @"../../../addons/ofxOsc/libs/oscpack/src/ip",
+					 @"../../../addons/ofxOsc/libs/oscpack/src/ip/posix",
+					 @"../../../addons/ofxOsc/libs/oscpack/src/ip/win32",
+					 @"../../../addons/ofxOsc/libs/oscpack/src/osc",
+					 @"../../../addons/ofxOsc/src"];
+		} else {
+			return _config[kIncludes];
+		}
 }
 
 - (NSArray *)extraLibPaths {
@@ -75,10 +86,10 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 #pragma mark - addon_config parsing
 
 - (void)setMetadataFromURL:(NSURL *)addonURL {
-	
+
 	NSURL * configURL = [addonURL URLByAppendingPathComponent:@"addon_config.mk"];
 	BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:[configURL path]];
-	
+
 	if(exists) {
 		NSString * config = [NSString stringWithContentsOfURL:configURL encoding:NSUTF8StringEncoding error:nil];
 		if(config) {
@@ -88,7 +99,7 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 }
 
 - (void) parseAddonConfig:(NSString *)config {
-	
+
 	NSArray * sections = @[@"meta", @"common", @"osx"];
 	for(NSString * section in sections) {
 		NSString * rawSettings = [self rawSettingsForSection:section inConfig:config];
@@ -109,25 +120,25 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 	NSString * content = [self firstHitForRegex:@"[^=]+$" inString:setting];
 	content = [content stringByReplacingOccurrencesOfString:@"/%" withString:@""]; // need to strip '/%'s
 	BOOL append = [operator rangeOfString:@"+="].location != NSNotFound;
-	
+
 	NSMutableArray * currentSettings = _config[name];
-	
+
 	if(!currentSettings || !append) {
 		currentSettings = [[NSMutableArray alloc] init];
 	}
-	
+
 	if(content) {
 		[currentSettings addObject:[content stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]]];
 	}
-	
+
 	_config[name] = currentSettings;
 }
 
 - (NSString *) rawSettingsForSection:(NSString *)section inConfig:(NSString *)config {
-	
+
 	NSString * regex = [NSString stringWithFormat:@"%@:(.|\\n)*?\n[a-z]+:", section];
 	NSRegularExpression * expression = [NSRegularExpression regularExpressionWithPattern:regex options:0 error:nil];
-	
+
 	__block NSString * relevantSection = nil;
 	[expression enumerateMatchesInString:config
 								 options:0
@@ -137,7 +148,7 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 		 relevantSection = [config substringWithRange:result.range];
 		 *stop = YES;
 	 }];
-	
+
 	relevantSection = [self stringRemovingAllHitsForRegex:@"\n[a-z]+:.*" fromString:relevantSection]; // remove labels
 	relevantSection = [self stringRemovingAllHitsForRegex:@".*?\\#.*" fromString:relevantSection]; // remove comments
 	return relevantSection;
