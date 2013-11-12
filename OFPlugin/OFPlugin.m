@@ -462,12 +462,35 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		[NSURLConnection sendAsynchronousRequest:req
 										   queue:[[NSOperationQueue alloc] init]
 							   completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+								   BOOL success = NO;
+								   NSString * errMsg = nil;
+								   
 								   if(data) {
-									   [self printToConsole:@"done!\n"];
 									   id jsonObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-									   [self cloneDependencies:dependencies forAddon:ctx[@"addon"] withJSON:jsonObject];
+									   if(jsonObject) {
+										   [self printToConsole:@"done!\n"];
+										   [self cloneDependencies:dependencies forAddon:ctx[@"addon"] withJSON:jsonObject];
+										   success = YES;
+									   } else {
+										   errMsg = @"Couldn't parse result from ofxaddons.com";
+									   }
 								   } else {
-									   [self printToConsole:@"request failed"];
+									   errMsg = connectionError.localizedDescription;
+								   }
+								   
+								   if(!success) {
+									   dispatch_async(dispatch_get_main_queue(), ^{
+										   NSAlert * a = [NSAlert alertWithMessageText:@"Couldn't get addon info from ofxaddons.com"
+																		 defaultButton:nil
+																	   alternateButton:nil
+																		   otherButton:nil
+															 informativeTextWithFormat:@"%@", errMsg];
+										   
+										   [a beginSheetModalForWindow:[NSApp keyWindow]
+														 modalDelegate:nil
+														didEndSelector:nil
+														   contextInfo:nil];
+									   });   
 								   }
 							   }];
 	}
@@ -505,7 +528,6 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 				// search for a fork by the same owner
 				for(NSDictionary * candidate in candidates) {
 					if([candidate[@"owner"] isEqualToString:owner]) {
-						NSLog(@"owner: %@", candidate);
 						chosenCandidate = candidate;
 					}
 				}
