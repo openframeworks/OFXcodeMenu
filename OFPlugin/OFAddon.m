@@ -5,6 +5,7 @@ NSString * const kIncludesToExclude = @"ADDON_INCLUDES_EXCLUDE"; // try not to t
 NSString * const kFrameworksToInclude = @"ADDON_FRAMEWORKS";
 NSString * const kIncludes = @"ADDON_INCLUDES";
 NSString * const kURL = @"ADDON_URL";
+NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 
 @interface OFAddon()
 
@@ -43,6 +44,10 @@ NSString * const kURL = @"ADDON_URL";
 
 - (NSArray *)includeFoldersToExclude {
 	return _config[kIncludesToExclude];
+}
+
+- (NSArray *)dependencies {
+	return _config[kDependencies];
 }
 
 - (NSArray *)extraHeaderSearchPaths {

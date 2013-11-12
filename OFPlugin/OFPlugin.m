@@ -135,7 +135,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 																				  action:@selector(addAddonForMenuItem:)
 																		   keyEquivalent:@""];
 					
-					NSString * addonPath = [NSString stringWithFormat:@"%@/%@/", _addonsPath, addon];
+					NSString * addonPath = [self pathForAddonWithName:addon];
 					[addonItem setAddon:[OFAddon addonWithPath:addonPath name:addon]];
 					[addonItem setTarget:self];
 					[_addonsListMenu addItem:addonItem];
@@ -181,8 +181,12 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 #pragma mark - Actions
 
-- (void)addAddonForMenuItem:(OFAddonMenuItem *)addonMenuItem
-{
+- (void)addAddonForMenuItem:(OFAddonMenuItem *)addonMenuItem {
+	[self addAddon:addonMenuItem.addon];
+}
+
+- (void)addAddon:(OFAddon *)addon {
+	
 	// These Obj-C classes found via class-dumping Xcode's internal frameworks
 	
 	// IDEWorkspaceDocument -> IDEKit
@@ -195,12 +199,12 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		id /* Xcode3Project */ container = objc_msgSend(workspace, @selector(wrappedXcode3Project));
 		id /* PBXProject */ project = objc_msgSend(container, @selector(pbxProject));
 		id /* Xcode3Group */ addonsGroup = [self findAddonsGroupFromRoot:objc_msgSend(container, @selector(rootGroup))];
-		[addonMenuItem.addon setMetadataFromURL:[NSURL fileURLWithPath:addonMenuItem.addon.path]];
+		[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path]];
 		
 		if(addonsGroup) {
 			NSArray * targets = objc_msgSend(project, @selector(targets));
-			[self addAddon:addonMenuItem.addon toGroup:addonsGroup andTargets:targets inProject:project];
-			[self modifyBuildSettingsInTargets:targets forAddon:addonMenuItem.addon];
+			[self addAddon:addon toGroup:addonsGroup andTargets:targets inProject:project];
+			[self modifyBuildSettingsInTargets:targets forAddon:addon];
 		} else {
 			[[NSAlert alertWithMessageText:@"Couldn't find an \"addons\" group"
 							 defaultButton:@"Oh, right"
@@ -208,6 +212,8 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 							   otherButton:nil
 				 informativeTextWithFormat:@"You should have a group called \"addons\" in your project"] runModal];
 		}
+		
+		[self handleUnresolvedDependenciesInAddon:addon];
 	}
 	@catch (NSException *exception) {
 		NSLog(@"OFPlugin problem! : %@", exception);
@@ -245,6 +251,46 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	
 	// add any external header search paths the addon requires
 	[self modifyBuildSettingsInTargets:targets forAddon:addon];
+}
+
+- (void)handleUnresolvedDependenciesInAddon:(OFAddon *)addon {
+	
+	NSMutableArray * unresolvedDependencies = [[NSMutableArray alloc] init];
+	
+	for(NSString * dependency in addon.dependencies) {
+		BOOL found = NO;
+		for(NSMenuItem * item in _addonsListMenu.itemArray) {
+			if([item.title isEqualToString:dependency]) {
+				found = YES;
+				[self addAddon:[OFAddon addonWithPath:[self pathForAddonWithName:dependency]
+												 name:dependency]];
+				break;
+			}
+			
+		}
+		if(!found) {
+			[unresolvedDependencies addObject:dependency];
+		}
+	}
+	
+	if(unresolvedDependencies.count > 0) {
+		NSMutableString * msg = [[NSMutableString alloc] init];
+		for(NSString * dep in unresolvedDependencies) {
+			[msg appendString:[NSString stringWithFormat:@"%@, ", dep]];
+		}
+		[msg deleteCharactersInRange:NSMakeRange(msg.length - 2, 2)];
+		
+		NSAlert * a = [NSAlert alertWithMessageText:@"Unresolved dependencies"
+									  defaultButton:@"Clone them!"
+									alternateButton:@"I'll get them myself"
+										otherButton:nil
+						  informativeTextWithFormat:@"This addon has the following dependencies: %@", msg];
+		
+		[a beginSheetModalForWindow:[NSApp keyWindow]
+					  modalDelegate:self
+					 didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:)
+						contextInfo:(__bridge_retained void *)(unresolvedDependencies)];
+	}
 }
 
 #pragma mark - Util
@@ -401,6 +447,88 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 	
 	return frameworkPaths;
+}
+
+- (void) alertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo {
+	
+	NSArray * dependencies = (__bridge_transfer NSArray *)(contextInfo);
+	if(returnCode == NSAlertDefaultReturn) {
+		NSURL * jsonURL = [NSURL URLWithString:@"http://ofxaddons.com/api/v1/all.json"];
+		NSURLRequest * req = [NSURLRequest requestWithURL:jsonURL];
+		
+		[self printToConsole:@"asking ofxaddons.com for repo URLs ... "];
+		
+		[NSURLConnection sendAsynchronousRequest:req
+										   queue:[[NSOperationQueue alloc] init]
+							   completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
+								   if(data) {
+									   [self printToConsole:@"done!\n"];
+									   id jsonObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+									   [self cloneDependencies:dependencies withJSON:jsonObject];
+								   } else {
+									   [self printToConsole:@"request failed"];
+								   }
+							   }];
+	}
+}
+
+- (void) cloneDependencies:(NSArray *)dependencies withJSON:(NSDictionary *)json {
+	
+	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+		for(NSString * dep in dependencies) {
+			for(NSDictionary * repo in json[@"repos"]) {
+				if ([repo[@"name"] isEqualToString:dep] && repo[@"clone_url"]) {
+					
+					[self printToConsole:[NSString stringWithFormat:@"cloning %@ ... ", repo[@"name"]]];
+					
+					NSTask * cloneTask = [[NSTask alloc] init];
+					[cloneTask setLaunchPath:@"/usr/bin/git"];
+					[cloneTask setCurrentDirectoryPath:_addonsPath];
+					[cloneTask setArguments:@[@"clone", repo[@"clone_url"]]];
+					[cloneTask launch];
+					[cloneTask waitUntilExit];
+					
+					[self printToConsole:[NSString stringWithFormat:@"done!\n"]];
+					
+					dispatch_async(dispatch_get_main_queue(), ^{
+						OFAddon * newAddon = [OFAddon addonWithPath:[self pathForAddonWithName:dep] name:dep];
+						[self addAddon:newAddon];
+					});
+					
+					break;
+				}
+			}
+		}
+		
+		[self printToConsole:@"done cloning\n"];
+	});
+}
+
+- (void)printToConsole:(NSString *)string {
+	dispatch_async(dispatch_get_main_queue(), ^{
+		@try {
+			NSAttributedString * attrString = [[NSAttributedString alloc] initWithString:string attributes:[[self consoleView] typingAttributes]];
+			[[[self consoleView] textStorage] appendAttributedString:attrString];
+		}
+		@catch (NSException *exception) {
+			
+		}
+		@finally {
+			
+		}
+	});
+}
+
+- (NSTextView *) consoleView {
+	id workspaceController = [[NSApp keyWindow] windowController];
+	id editorArea = objc_msgSend(workspaceController, @selector(editorArea));
+    id activeDebuggerArea = objc_msgSend(editorArea, @selector(activeDebuggerArea));
+    id consoleArea = objc_msgSend(activeDebuggerArea, @selector(consoleArea));
+    return (NSTextView *)[consoleArea valueForKeyPath:@"_consoleView"];
+}
+
+- (NSString *)pathForAddonWithName:(NSString *)addonName {
+	return [NSString stringWithFormat:@"%@/%@/", _addonsPath, addonName];
 }
 
 @end

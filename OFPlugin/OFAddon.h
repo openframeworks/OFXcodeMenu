@@ -21,6 +21,7 @@
 @property (nonatomic, readonly) NSArray * extraHeaderSearchPaths;
 @property (nonatomic, readonly) NSArray * extraLibPaths;
 @property (nonatomic, readonly) NSArray * systemFrameworks;
+@property (nonatomic, readonly) NSArray * dependencies;
 
 - (void) setMetadataFromURL:(NSURL *)URL;
 
