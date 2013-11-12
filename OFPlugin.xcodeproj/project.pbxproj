@@ -43,13 +43,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		662C55A818319349006A59C6 /* addons */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = addons;
-			sourceTree = "<group>";
-		};
 		66C4B89D182EB24200C2AA97 = {
 			isa = PBXGroup;
 			children = (
@@ -79,7 +72,6 @@
 		66C4B8AD182EB24200C2AA97 /* OFPlugin */ = {
 			isa = PBXGroup;
 			children = (
-				662C55A818319349006A59C6 /* addons */,
 				66C4B8B3182EB24300C2AA97 /* OFPlugin.h */,
 				66C4B8B4182EB24300C2AA97 /* OFPlugin.m */,
 				6671EB57182F00040050B812 /* OFAddon.h */,

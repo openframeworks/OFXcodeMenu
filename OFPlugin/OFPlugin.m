@@ -210,7 +210,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		}
 	}
 	@catch (NSException *exception) {
-		NSLog(@"PROBLEM! : %@", exception);
+		NSLog(@"OFPlugin problem! : %@", exception);
 	}
 	@finally {
 		
@@ -228,6 +228,14 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	
 	// add any system frameworks
 	objc_msgSend(newPbxGroup, @selector(addFiles:copy:createGroupsRecursively:), [self systemFrameworksForAddon:addon], NO, YES);
+	
+	// add any extra libs
+	NSArray * extraLibs = addon.extraLibPaths;
+	NSString * projectPath = [objc_msgSend(project, @selector(path)) stringByDeletingLastPathComponent];
+	for(NSString * libPath in extraLibs) {
+		NSString * fullLibPath = [NSString stringWithFormat:@"%@/%@", projectPath, libPath];
+		objc_msgSend(newPbxGroup, @selector(addFiles:copy:createGroupsRecursively:), @[fullLibPath], 0, YES);
+	}
 	
 	// remove stuff excluded by addons_config.mk
 	[self recursivelyRemoveFilesInGroup:newPbxGroup forAddon:addon path:@""];

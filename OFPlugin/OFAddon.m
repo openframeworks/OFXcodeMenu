@@ -80,8 +80,6 @@ NSString * const kURL = @"ADDON_URL";
 			[self parseAddonConfig:config];
 		}
 	}
-	
-	NSLog(@"%@", _config);
 }
 
 - (void) parseAddonConfig:(NSString *)config {
@@ -132,12 +130,8 @@ NSString * const kURL = @"ADDON_URL";
 		 *stop = YES;
 	 }];
 	
-	
-	NSLog(@"A %@", relevantSection);
 	relevantSection = [self stringRemovingAllHitsForRegex:@"\n[a-z]+:.*" fromString:relevantSection]; // remove labels
-	NSLog(@"B %@", relevantSection);
 	relevantSection = [self stringRemovingAllHitsForRegex:@".*?\\#.*" fromString:relevantSection]; // remove comments
-	NSLog(@"C %@", relevantSection);
 	return relevantSection;
 }
 
