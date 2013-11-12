@@ -387,7 +387,12 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 - (NSArray *) systemFrameworksForAddon:(OFAddon *)addon {
 	
-	return nil;
+	NSMutableArray * frameworkPaths = [[NSMutableArray alloc] init];
+	for(NSString * frameworkName in addon.systemFrameworks) {
+		[frameworkPaths addObject:[NSString stringWithFormat:@"/System/Library/Frameworks/%@.framework", frameworkName]];
+	}
+	
+	return frameworkPaths;
 }
 
 @end
