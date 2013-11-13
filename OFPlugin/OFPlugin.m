@@ -49,7 +49,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	return self;
 }
 
-#pragma mark - Menu stuffs
+#pragma mark - Menu
 
 - (void)generateMenu {
 	_topLevelMenuItem = [[NSMenuItem alloc] initWithTitle:@"openFrameworks"
@@ -179,6 +179,10 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	[self scanAddons];
 }
 
+- (NSString *)pathForAddonWithName:(NSString *)addonName {
+	return [NSString stringWithFormat:@"%@/%@/", _addonsPath, addonName];
+}
+
 #pragma mark - Actions
 
 - (void)addAddonForMenuItem:(OFAddonMenuItem *)addonMenuItem {
@@ -288,12 +292,12 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		
 		[a beginSheetModalForWindow:[NSApp keyWindow]
 					  modalDelegate:self
-					 didEndSelector:@selector(alertDidEnd:returnCode:contextInfo:)
+					 didEndSelector:@selector(dependencyAlertDidEnd:returnCode:contextInfo:)
 						contextInfo:(__bridge_retained void *)(@{@"deps":unresolvedDependencies, @"addon":addon})];
 	}
 }
 
-#pragma mark - Util
+#pragma mark - Group Utils
 
 - (void) recursivelyRemoveFilesInGroup:(id /* PBXGroup */)group forAddon:(OFAddon *)addon path:(NSString *)path {
 	
@@ -329,22 +333,6 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		if(childrenToRemove.count > 0) {
 			objc_msgSend(group, @selector(removeItemsAtIndexes:), childrenToRemove);
 		}
-	}
-}
-
-- (void)modifyBuildSettingsInTargets:(NSArray * /* PBXTarget */)targets forAddon:(OFAddon *)addon {
-	
-	for(id /* PBXTarget */ target in targets) {
-		id /* XCConfigurationList */ configurationList = objc_msgSend(target, @selector(buildConfigurationList));
-		NSArray * buildConfigurationNames = objc_msgSend(configurationList, @selector(buildConfigurationNames));
-		
-		for(NSString * configName in buildConfigurationNames) {
-			NSArray * settings = objc_msgSend(configurationList, @selector(buildSettingDictionariesForConfigurationName:errors:), configName, nil);
-			for(id /* DVTMacroDefinitionTable */ macroTable in settings) {
-				[self addPaths:addon.extraHeaderSearchPaths forSetting:@"USER_HEADER_SEARCH_PATHS" toTable:macroTable];
-			}
-		}
-		objc_msgSend(configurationList, @selector(invalidateCaches));
 	}
 }
 
@@ -411,6 +399,24 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	return NO;
 }
 
+#pragma mark - Build Settings Utils
+
+- (void)modifyBuildSettingsInTargets:(NSArray * /* PBXTarget */)targets forAddon:(OFAddon *)addon {
+	
+	for(id /* PBXTarget */ target in targets) {
+		id /* XCConfigurationList */ configurationList = objc_msgSend(target, @selector(buildConfigurationList));
+		NSArray * buildConfigurationNames = objc_msgSend(configurationList, @selector(buildConfigurationNames));
+		
+		for(NSString * configName in buildConfigurationNames) {
+			NSArray * settings = objc_msgSend(configurationList, @selector(buildSettingDictionariesForConfigurationName:errors:), configName, nil);
+			for(id /* DVTMacroDefinitionTable */ macroTable in settings) {
+				[self addPaths:addon.extraHeaderSearchPaths forSetting:@"USER_HEADER_SEARCH_PATHS" toTable:macroTable];
+			}
+		}
+		objc_msgSend(configurationList, @selector(invalidateCaches));
+	}
+}
+
 - (void) addPaths:(NSArray *)paths forSetting:(NSString *)setting toTable:(id /* DVTMacroDefinitionTable */)table {
 	
 	if(!paths || !table) return;
@@ -450,7 +456,9 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	return frameworkPaths;
 }
 
-- (void) alertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo {
+#pragma mark - Dependency Utils
+
+- (void) dependencyAlertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo {
 	
 	NSDictionary * ctx = (__bridge_transfer NSDictionary *)(contextInfo);
 	NSArray * dependencies = ctx[@"deps"];
@@ -462,44 +470,57 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		
 		[NSURLConnection sendAsynchronousRequest:req
 										   queue:[[NSOperationQueue alloc] init]
-							   completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError) {
-								   BOOL success = NO;
-								   NSString * errMsg = nil;
-								   
-								   if(data) {
-									   id jsonObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-									   if(jsonObject) {
-										   [self printToConsole:@"done!\n"];
-										   [self cloneDependencies:dependencies forAddon:ctx[@"addon"] withJSON:jsonObject];
-										   success = YES;
-									   } else {
-										   errMsg = @"Couldn't parse result from ofxaddons.com";
-									   }
-								   } else {
-									   errMsg = connectionError.localizedDescription;
-								   }
-								   
-								   if(!success) {
-									   dispatch_async(dispatch_get_main_queue(), ^{
-										   NSAlert * a = [NSAlert alertWithMessageText:@"Couldn't get addon info from ofxaddons.com"
-																		 defaultButton:nil
-																	   alternateButton:nil
-																		   otherButton:nil
-															 informativeTextWithFormat:@"%@", errMsg];
-										   
-										   [a beginSheetModalForWindow:[NSApp keyWindow]
-														 modalDelegate:nil
-														didEndSelector:nil
-														   contextInfo:nil];
-									   });   
-								   }
-							   }];
+							   completionHandler:^(NSURLResponse *response, NSData *data, NSError *connectionError)
+		{
+			BOOL success = NO;
+			NSString * errMsg = nil;
+			
+			if(data) {
+				id jsonObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+				if(jsonObject) {
+					[self printToConsole:@"done!\n"];
+					[self cloneDependencies:dependencies forAddon:ctx[@"addon"] withJSON:jsonObject];
+					success = YES;
+				} else {
+					errMsg = @"Couldn't parse result from ofxaddons.com";
+				}
+			} else {
+				errMsg = connectionError.localizedDescription;
+			}
+			
+			if(!success) {
+				dispatch_async(dispatch_get_main_queue(), ^{
+					NSAlert * a = [NSAlert alertWithMessageText:@"Couldn't get addon info from ofxaddons.com"
+												  defaultButton:nil
+												alternateButton:nil
+													otherButton:nil
+									  informativeTextWithFormat:@"%@", errMsg];
+					
+					[a beginSheetModalForWindow:[NSApp keyWindow]
+								  modalDelegate:nil
+								 didEndSelector:nil
+									contextInfo:nil];
+				});
+			}
+		}];
 	}
 }
 
 - (void) cloneDependencies:(NSArray *)dependencies forAddon:(OFAddon *)addon withJSON:(NSDictionary *)json {
 	
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+		
+		NSString * gitPath = [self gitPath];
+		if(!gitPath) {
+			dispatch_async(dispatch_get_main_queue(), ^{
+				[[NSAlert alertWithMessageText:@"Couldn't locate git"
+								 defaultButton:nil
+							   alternateButton:nil
+								   otherButton:nil
+					 informativeTextWithFormat:@"Dependencies not installed"] runModal];
+			});
+			return;
+		}
 		
 		NSString * owner = nil;
 		for(NSDictionary * repo in json[@"repos"]) {
@@ -508,56 +529,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 			}
 		}
 		
-		// figure out which repos to clone
-		NSMutableArray * reposToClone = [[NSMutableArray alloc] init];
-		for(NSString * dep in dependencies) {
-			NSMutableArray * candidates = [[NSMutableArray alloc] init];
-			
-			for(NSDictionary * repo in json[@"repos"]) {
-				if ([repo[@"name"] isEqualToString:dep] && repo[@"clone_url"]) {
-					[candidates addObject:repo];
-				}
-			}
-			
-			if(candidates.count == 0) {
-				[self printToConsole:[NSString stringWithFormat:@"couldn't find repo for %@\n", dep]];
-			} else if(candidates.count == 1) {
-				[reposToClone addObject:candidates[0]];
-			} else {
-				NSDictionary * chosenCandidate = nil;
-				
-				// search for a fork by the same owner
-				for(NSDictionary * candidate in candidates) {
-					if([candidate[@"owner"] isEqualToString:owner]) {
-						chosenCandidate = candidate;
-					}
-				}
-				
-				// search for the most recently updated fork
-				if(!chosenCandidate) {
-					[candidates sortUsingComparator:^NSComparisonResult(NSDictionary * a, NSDictionary * b) {
-						NSDate * aDate = [NSDate dateWithString:a[@"last_pushed_at"]];
-						NSDate * bDate = [NSDate dateWithString:b[@"last_pushed_at"]];
-						return [aDate compare:bDate];
-					}];
-					
-					chosenCandidate = [candidates lastObject];
-				}
-				
-				[reposToClone addObject:chosenCandidate];
-			}
-		}
-		
-		NSString * gitPath = [self gitPath];
-		
-		if(!gitPath) {
-			[[NSAlert alertWithMessageText:@"Couldn't locate git"
-							 defaultButton:nil
-						   alternateButton:nil
-							   otherButton:nil
-				 informativeTextWithFormat:@"Dependencies not installed"] runModal];
-			return;
-		}
+		NSArray * reposToClone = [self bestReposFromJSON:json forDependencies:dependencies owner:owner];
 		
 		@try {
 			[self printToConsole:[NSString stringWithFormat:@"using git at %@\n", gitPath]];
@@ -591,31 +563,47 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	});
 }
 
-- (void)printToConsole:(NSString *)string {
-	dispatch_async(dispatch_get_main_queue(), ^{
-		@try {
-			NSAttributedString * attrString = [[NSAttributedString alloc] initWithString:string attributes:[[self consoleView] typingAttributes]];
-			[[[self consoleView] textStorage] appendAttributedString:attrString];
+- (NSArray *)bestReposFromJSON:(NSDictionary *)json forDependencies:(NSArray *)dependencies owner:(NSString *)owner {
+	
+	NSMutableArray * repos = [[NSMutableArray alloc] init];
+	for(NSString * dep in dependencies) {
+		NSMutableArray * candidates = [[NSMutableArray alloc] init];
+		
+		for(NSDictionary * repo in json[@"repos"]) {
+			if ([repo[@"name"] isEqualToString:dep] && repo[@"clone_url"]) {
+				[candidates addObject:repo];
+			}
 		}
-		@catch (NSException *exception) {
+		
+		if(candidates.count == 0) {
+			[self printToConsole:[NSString stringWithFormat:@"couldn't find repo for %@\n", dep]];
+		} else if(candidates.count == 1) {
+			[repos addObject:candidates[0]];
+		} else {
+			NSDictionary * chosenCandidate = nil;
 			
-		}
-		@finally {
+			// search for a fork by the same owner
+			for(NSDictionary * candidate in candidates) {
+				if([candidate[@"owner"] isEqualToString:owner]) {
+					chosenCandidate = candidate;
+				}
+			}
 			
+			// search for the most recently updated fork
+			if(!chosenCandidate) {
+				[candidates sortUsingComparator:^NSComparisonResult(NSDictionary * a, NSDictionary * b) {
+					NSDate * aDate = [NSDate dateWithString:a[@"last_pushed_at"]];
+					NSDate * bDate = [NSDate dateWithString:b[@"last_pushed_at"]];
+					return [aDate compare:bDate];
+				}];
+				
+				chosenCandidate = [candidates lastObject];
+			}
+			
+			[repos addObject:chosenCandidate];
 		}
-	});
-}
-
-- (NSTextView *) consoleView {
-	id workspaceController = [[NSApp keyWindow] windowController];
-	id editorArea = objc_msgSend(workspaceController, @selector(editorArea));
-    id activeDebuggerArea = objc_msgSend(editorArea, @selector(activeDebuggerArea));
-    id consoleArea = objc_msgSend(activeDebuggerArea, @selector(consoleArea));
-    return (NSTextView *)[consoleArea valueForKeyPath:@"_consoleView"];
-}
-
-- (NSString *)pathForAddonWithName:(NSString *)addonName {
-	return [NSString stringWithFormat:@"%@/%@/", _addonsPath, addonName];
+	}
+	return repos;
 }
 
 - (NSString *)gitPath {
@@ -645,6 +633,31 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	else {
 		return nil;
 	}
+}
+
+#pragma mark - Extra Utils
+
+- (void)printToConsole:(NSString *)string {
+	dispatch_async(dispatch_get_main_queue(), ^{
+		@try {
+			NSAttributedString * attrString = [[NSAttributedString alloc] initWithString:string attributes:[[self consoleView] typingAttributes]];
+			[[[self consoleView] textStorage] appendAttributedString:attrString];
+		}
+		@catch (NSException *exception) {
+			
+		}
+		@finally {
+			
+		}
+	});
+}
+
+- (NSTextView *) consoleView {
+	id workspaceController = [[NSApp keyWindow] windowController];
+	id editorArea = objc_msgSend(workspaceController, @selector(editorArea));
+    id activeDebuggerArea = objc_msgSend(editorArea, @selector(activeDebuggerArea));
+    id consoleArea = objc_msgSend(activeDebuggerArea, @selector(consoleArea));
+    return (NSTextView *)[consoleArea valueForKeyPath:@"_consoleView"];
 }
 
 @end
