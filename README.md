@@ -9,6 +9,9 @@ Building the included Xcode project will install the plugin. To do it manually, 
 
 In theory it'll work on Xcode 4 as well, but you'll need to enable garbage collection when building the plugin.
 
-For the most part, the plugin should do the right thing when given an addon. It will add "src" and "libs" folders, ignoring those that are clearly for windows, linux, etc. Individual addons can have additional rules, such as how ofxCv requires a link to ofxOpenCv's static libs. See [OFAddon.m](https://github.com/admsyn/OFPlugin/blob/master/OFPlugin/OFAddon.m) if you'd like to pull-request any special cases for your addon.
+Addon Writers!
+--------------
+
+The plugin parses addons_config.mk and will use it tell which folders to ignore, extra includes to add, etc. Example folders are always ignored by default. It will also use some of the meta data, such as the dependency list and addon url. If your addon doesn't work with OFPlugin properly out-of-the-box, you should add an addon_config.mk. See ofxKinect and ofxMidi for examples.
 
 ![screenshot](screenshot.jpg "it does this")
