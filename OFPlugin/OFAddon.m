@@ -82,22 +82,23 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 
 #pragma mark - addon_config parsing
 
-- (void)setMetadataFromURL:(NSURL *)addonURL {
+- (void)setMetadataFromURL:(NSURL *)addonURL forPlatform:(NSString *)platform {
 
 	NSURL * configURL = [addonURL URLByAppendingPathComponent:@"addon_config.mk"];
 	BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:[configURL path]];
+	if(!platform) platform = @"osx";
 
 	if(exists) {
 		NSString * config = [NSString stringWithContentsOfURL:configURL encoding:NSUTF8StringEncoding error:nil];
 		if(config) {
-			[self parseAddonConfig:config];
+			[self parseAddonConfig:config forPlatform:platform];
 		}
 	}
 }
 
-- (void) parseAddonConfig:(NSString *)config {
+- (void) parseAddonConfig:(NSString *)config forPlatform:(NSString *)platform {
 
-	NSArray * sections = @[@"meta", @"common", @"osx"];
+	NSArray * sections = @[@"meta", @"common", platform];
 	for(NSString * section in sections) {
 		NSString * rawSettings = [self rawSettingsForSection:section inConfig:config];
 		if(rawSettings) {

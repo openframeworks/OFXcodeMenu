@@ -103,7 +103,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	} else {
 		if([sender respondsToSelector:@selector(addon)]) {
 			OFAddon * addon = [(OFAddonMenuItem *)sender addon];
-			[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path]];
+			[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path] forPlatform:nil];
 			if(addon.url) {
 				[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:addon.url]];
 			}
@@ -202,8 +202,11 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		id /* IDEWorkspace */ workspace = objc_msgSend(document, @selector(workspace));
 		id /* Xcode3Project */ container = objc_msgSend(workspace, @selector(wrappedXcode3Project));
 		id /* PBXProject */ project = objc_msgSend(container, @selector(pbxProject));
-		id /* Xcode3Group */ addonsGroup = [self findAddonsGroupFromRoot:objc_msgSend(container, @selector(rootGroup))];
-		[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path isDirectory:YES]];
+		id /* Xcode3Group */ rootGroup = objc_msgSend(container, @selector(rootGroup));
+		id /* Xcode3Group */ addonsGroup = [self findGroupNamed:@"addons" fromRoot:rootGroup];
+		
+		[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path isDirectory:YES]
+					  forPlatform:[self detectPlatformFromRootGroup:rootGroup]];
 		
 		if(addonsGroup) {
 			NSArray * targets = objc_msgSend(project, @selector(targets));
@@ -266,8 +269,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		for(NSMenuItem * item in _addonsListMenu.itemArray) {
 			if([item.title isEqualToString:dependency]) {
 				found = YES;
-				[self addAddon:[OFAddon addonWithPath:[self pathForAddonWithName:dependency]
-												 name:dependency]];
+				[self addAddon:[OFAddon addonWithPath:[self pathForAddonWithName:dependency] name:dependency]];
 				break;
 			}
 			
@@ -336,24 +338,30 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 }
 
-// breadth first search for a group named "addons"
-- (id) findAddonsGroupFromRoot:(id /* Xcode3Group */)root {
+// breadth first search for the first hit for targetName
+- (id) findGroupNamed:(NSString *)targetName fromRoot:(id /* Xcode3Group */)root {
 	
 	if(root == nil) return nil;
 	
 	NSMutableArray * queue = [[NSMutableArray alloc] init];
+	NSLog(@"queue + %@", [root name]);
 	[queue addObject:root];
 	
 	while([queue count] > 0) {
 		id node = [queue objectAtIndex:0];
+		NSLog(@"scanning %@", [node name]);
 		[queue removeObjectAtIndex:0];
+		NSLog(@"queue now %@", queue);
+		
 		NSString * nodeName = objc_msgSend(node, @selector(name));
-		if([nodeName caseInsensitiveCompare:@"addons"] == NSOrderedSame) {
+		if([nodeName caseInsensitiveCompare:targetName] == NSOrderedSame) {
+			NSLog(@"returning %@", nodeName);
 			return node;
 		} else {
 			if([node respondsToSelector:@selector(subitems)]) {
 				NSArray * subitems = objc_msgSend(node, @selector(subitems));
 				for(id item in subitems) {
+					NSLog(@"queue + %@", [item name]);
 					[queue addObject:item];
 				}
 			}
@@ -397,6 +405,12 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 	
 	return NO;
+}
+
+- (NSString *) detectPlatformFromRootGroup:(id /* Xcode3Group */)rootGroup {
+	
+	id hit = [self findGroupNamed:@"iOS+OFLib.xcodeproj" fromRoot:rootGroup];
+	return hit ? @"ios" : @"osx";
 }
 
 #pragma mark - Build Settings Utils

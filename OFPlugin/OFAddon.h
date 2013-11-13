@@ -23,6 +23,6 @@
 @property (nonatomic, readonly) NSArray * systemFrameworks;
 @property (nonatomic, readonly) NSArray * dependencies;
 
-- (void) setMetadataFromURL:(NSURL *)URL;
+- (void) setMetadataFromURL:(NSURL *)URL forPlatform:(NSString *)platform;
 
 @end
