@@ -203,7 +203,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		id /* Xcode3Project */ container = objc_msgSend(workspace, @selector(wrappedXcode3Project));
 		id /* PBXProject */ project = objc_msgSend(container, @selector(pbxProject));
 		id /* Xcode3Group */ addonsGroup = [self findAddonsGroupFromRoot:objc_msgSend(container, @selector(rootGroup))];
-		[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path]];
+		[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path isDirectory:YES]];
 		
 		if(addonsGroup) {
 			NSArray * targets = objc_msgSend(project, @selector(targets));
@@ -220,7 +220,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		[self handleUnresolvedDependenciesInAddon:addon];
 	}
 	@catch (NSException *exception) {
-		NSLog(@"OFPlugin problem! : %@", exception);
+		NSLog(@"OFPlugin problem! (please report the issue at https://github.com/admsyn/OFPlugin) : %@", exception);
 	}
 	@finally {
 		
@@ -434,9 +434,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 }
 
 - (NSArray *) srcAndLibsFoldersForAddon:(OFAddon *)addon {
-	NSArray * paths = @[[addon.path stringByAppendingString:@"src"],
-						[addon.path stringByAppendingString:@"libs"]];
-	
+	NSArray * paths = @[[addon.path stringByAppendingString:@"src"], [addon.path stringByAppendingString:@"libs"]];
 	NSMutableArray * folders = [[NSMutableArray alloc] init];
 	for(NSString * path in paths) {
 		if([[NSFileManager defaultManager] fileExistsAtPath:path]) {

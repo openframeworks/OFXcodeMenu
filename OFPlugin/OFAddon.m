@@ -100,14 +100,16 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 	NSArray * sections = @[@"meta", @"common", @"osx"];
 	for(NSString * section in sections) {
 		NSString * rawSettings = [self rawSettingsForSection:section inConfig:config];
-		NSRegularExpression * settingRegex = [NSRegularExpression regularExpressionWithPattern:@"[[A-Z]_]+.*" options:0 error:nil];
-		[settingRegex enumerateMatchesInString:rawSettings
-									   options:0
-										 range:NSMakeRange(0, rawSettings.length)
-									usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
-										[self parseSetting:[rawSettings substringWithRange:result.range]];
-									}];
+		if(rawSettings) {
+			NSRegularExpression * settingRegex = [NSRegularExpression regularExpressionWithPattern:@"[[A-Z]_]+.*" options:0 error:nil];
+			[settingRegex enumerateMatchesInString:rawSettings
+										   options:0
+											 range:NSMakeRange(0, rawSettings.length)
+										usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop) {
+											[self parseSetting:[rawSettings substringWithRange:result.range]];
+										}];
 
+		}
 	}
 }
 
@@ -133,22 +135,16 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 
 - (NSString *) rawSettingsForSection:(NSString *)section inConfig:(NSString *)config {
 
-	NSString * regex = [NSString stringWithFormat:@"%@:(.|\\n)*?\n[a-z]+:", section];
-	NSRegularExpression * expression = [NSRegularExpression regularExpressionWithPattern:regex options:0 error:nil];
-
-	__block NSString * relevantSection = nil;
-	[expression enumerateMatchesInString:config
-								 options:0
-								   range:NSMakeRange(0, config.length)
-							  usingBlock:^(NSTextCheckingResult *result, NSMatchingFlags flags, BOOL *stop)
-	 {
-		 relevantSection = [config substringWithRange:result.range];
-		 *stop = YES;
-	 }];
-
-	relevantSection = [self stringRemovingAllHitsForRegex:@"\n[a-z]+:.*" fromString:relevantSection]; // remove labels
-	relevantSection = [self stringRemovingAllHitsForRegex:@".*?\\#.*" fromString:relevantSection]; // remove comments
-	return relevantSection;
+	NSString * sectionRegex = [NSString stringWithFormat:@"%@:(.|\\n)*?\n([a-z]+:|\\z)", section];
+	NSString * relevantSection = [self firstHitForRegex:sectionRegex inString:config];
+	
+	if(relevantSection) {
+		relevantSection = [self stringRemovingAllHitsForRegex:@"\n[a-z]+:.*" fromString:relevantSection]; // remove labels
+		relevantSection = [self stringRemovingAllHitsForRegex:@".*?\\#.*" fromString:relevantSection]; // remove comments
+		return relevantSection;
+	} else {
+		return nil;
+	}
 }
 
 #pragma mark - Util
