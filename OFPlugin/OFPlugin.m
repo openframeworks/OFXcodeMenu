@@ -548,26 +548,46 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 			}
 		}
 		
-		// do the cloning
-		for(NSDictionary * repo in reposToClone) {
-			NSString * repoName = repo[@"name"];
-			[self printToConsole:[NSString stringWithFormat:@"cloning %@ ... ", repoName]];
-			
-			NSTask * cloneTask = [[NSTask alloc] init];
-			[cloneTask setLaunchPath:@"/usr/bin/git"];
-			[cloneTask setCurrentDirectoryPath:_addonsPath];
-			[cloneTask setArguments:@[@"clone", repo[@"clone_url"]]];
-			[cloneTask launch];
-			[cloneTask waitUntilExit];
-			
-			[self printToConsole:[NSString stringWithFormat:@"done!\n"]];
-			
-			dispatch_async(dispatch_get_main_queue(), ^{
-				[self addAddon:[OFAddon addonWithPath:[self pathForAddonWithName:repoName] name:repoName]];
-			});
+		NSString * gitPath = [self gitPath];
+		
+		if(!gitPath) {
+			[[NSAlert alertWithMessageText:@"Couldn't locate git"
+							 defaultButton:nil
+						   alternateButton:nil
+							   otherButton:nil
+				 informativeTextWithFormat:@"Dependencies not installed"] runModal];
+			return;
 		}
 		
-		[self printToConsole:@"done cloning\n"];
+		@try {
+			[self printToConsole:[NSString stringWithFormat:@"using git at %@\n", gitPath]];
+			
+			// do the cloning
+			for(NSDictionary * repo in reposToClone) {
+				NSString * repoName = repo[@"name"];
+				[self printToConsole:[NSString stringWithFormat:@"cloning %@ ... ", repoName]];
+				
+				NSTask * cloneTask = [[NSTask alloc] init];
+				[cloneTask setLaunchPath:gitPath];
+				[cloneTask setCurrentDirectoryPath:_addonsPath];
+				[cloneTask setArguments:@[@"clone", repo[@"clone_url"]]];
+				[cloneTask launch];
+				[cloneTask waitUntilExit];
+				
+				[self printToConsole:[NSString stringWithFormat:@"done!\n"]];
+				
+				dispatch_async(dispatch_get_main_queue(), ^{
+					[self addAddon:[OFAddon addonWithPath:[self pathForAddonWithName:repoName] name:repoName]];
+				});
+			}
+			[self printToConsole:@"done cloning\n"];
+		}
+		@catch (NSException *exception) {
+			[self printToConsole:[NSString stringWithFormat:@"issue while cloning: %@\n", exception.reason]];
+		}
+		@finally {
+			
+		}
 	});
 }
 
@@ -596,6 +616,35 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 - (NSString *)pathForAddonWithName:(NSString *)addonName {
 	return [NSString stringWithFormat:@"%@/%@/", _addonsPath, addonName];
+}
+
+- (NSString *)gitPath {
+	
+	// first, try and find the user's preferred git install
+	NSTask * findGit = [[NSTask alloc] init];
+	NSPipe * outputPipe = [NSPipe pipe];
+	NSPipe * inputPipe = [NSPipe pipe];
+	[findGit setLaunchPath:@"/bin/bash"];
+	[findGit setArguments:@[@"--login"]];
+	[findGit setStandardOutput:outputPipe];
+	[findGit setStandardInput:inputPipe];
+	[findGit launch];
+	[[inputPipe fileHandleForWriting] writeData:[@"which git; logout;\n" dataUsingEncoding:NSUTF8StringEncoding]];
+	[findGit waitUntilExit];
+	NSData * output = [[outputPipe fileHandleForReading] readDataToEndOfFile];
+	NSString * gitPath = [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding];
+	gitPath = [gitPath stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+	if(gitPath && [[NSFileManager defaultManager] fileExistsAtPath:gitPath]) {
+		return gitPath;
+	}
+	// if we couldn't find one, try /usr/bin/git as a fallback
+	else if([[NSFileManager defaultManager] fileExistsAtPath:@"/usr/bin/git"]) {
+		return @"/usr/bin/git";
+	}
+	// no git :(
+	else {
+		return nil;
+	}
 }
 
 @end
