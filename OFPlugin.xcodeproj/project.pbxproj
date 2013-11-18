@@ -119,8 +119,9 @@
 		66C4B89E182EB24200C2AA97 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				CLASSPREFIX = OF;
 				LastUpgradeCheck = 0500;
-				ORGANIZATIONNAME = lol;
+				ORGANIZATIONNAME = "";
 			};
 			buildConfigurationList = 66C4B8A1182EB24200C2AA97 /* Build configuration list for PBXProject "OFPlugin" */;
 			compatibilityVersion = "Xcode 3.2";

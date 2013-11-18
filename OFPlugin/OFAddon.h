@@ -1,11 +1,3 @@
-//
-//  OFAddon.h
-//  OFPlugin
-//
-//  Created by Adam Carlucci on 11/9/2013.
-//  Copyright (c) 2013 lol. All rights reserved.
-//
-
 #import <Foundation/Foundation.h>
 
 @interface OFAddon : NSObject
@@ -14,8 +6,8 @@
 
 @property (nonatomic, strong) NSString * path;
 @property (nonatomic, strong) NSString * name;
-@property (nonatomic, strong) NSString * url;
 
+@property (nonatomic, readonly) NSString * url;
 @property (nonatomic, readonly) NSArray * sourceFoldersToExclude;
 @property (nonatomic, readonly) NSArray * headerFoldersToExclude;
 @property (nonatomic, readonly) NSArray * extraHeaderSearchPaths;
