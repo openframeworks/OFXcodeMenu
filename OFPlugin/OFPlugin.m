@@ -104,13 +104,14 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		if([sender respondsToSelector:@selector(addon)]) {
 			OFAddon * addon = [(OFAddonMenuItem *)sender addon];
 			[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path] forPlatform:nil];
+			
+			// if the addon has a URL in addons_config, use that (otherwise, google it)
 			if(addon.url) {
 				[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:addon.url]];
+			} else {
+				NSString * searchURL = [NSString stringWithFormat:@"https://www.google.com/search?q=%@&btnI", addon.name];
+				[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:searchURL]];
 			}
-		} else {
-			NSString * searchTerm = [[sender title] stringByReplacingOccurrencesOfString:@"..." withString:@""];
-			NSString * searchURL = [NSString stringWithFormat:@"https://www.google.com/search?q=%@&btnI", searchTerm];
-			[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:searchURL]];
 		}
 	}
 }
@@ -344,24 +345,19 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	if(root == nil) return nil;
 	
 	NSMutableArray * queue = [[NSMutableArray alloc] init];
-	NSLog(@"queue + %@", [root name]);
 	[queue addObject:root];
 	
 	while([queue count] > 0) {
 		id node = [queue objectAtIndex:0];
-		NSLog(@"scanning %@", [node name]);
 		[queue removeObjectAtIndex:0];
-		NSLog(@"queue now %@", queue);
 		
 		NSString * nodeName = objc_msgSend(node, @selector(name));
 		if([nodeName caseInsensitiveCompare:targetName] == NSOrderedSame) {
-			NSLog(@"returning %@", nodeName);
 			return node;
 		} else {
 			if([node respondsToSelector:@selector(subitems)]) {
 				NSArray * subitems = objc_msgSend(node, @selector(subitems));
 				for(id item in subitems) {
-					NSLog(@"queue + %@", [item name]);
 					[queue addObject:item];
 				}
 			}
