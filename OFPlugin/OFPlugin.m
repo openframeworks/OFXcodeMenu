@@ -1,7 +1,7 @@
 #import "OFPlugin.h"
 #import "OFAddon.h"
 #import "OFAddonMenuItem.h"
-#import <objc/objc-runtime.h>
+#import "NSObject+OFPluginXcodePrivateMethods.h"
 
 NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
@@ -23,14 +23,14 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 + (void)pluginDidLoad:(NSBundle *)plugin
 {
-    static id sharedPlugin = nil;
-    static dispatch_once_t onceToken;
-    NSString * currentAppName = [[NSBundle mainBundle] infoDictionary][@"CFBundleName"];
-    if ([currentAppName isEqual:@"Xcode"]) {
-        dispatch_once(&onceToken, ^{
-            sharedPlugin = [[self alloc] initWithBundle:plugin];
-        });
-    }
+	static id sharedPlugin = nil;
+	static dispatch_once_t onceToken;
+	NSString * currentAppName = [[NSBundle mainBundle] infoDictionary][@"CFBundleName"];
+	if ([currentAppName isEqual:@"Xcode"]) {
+		dispatch_once(&onceToken, ^{
+			sharedPlugin = [[self alloc] initWithBundle:plugin];
+		});
+	}
 }
 
 - (id)initWithBundle:(NSBundle *)plugin {
@@ -52,9 +52,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 #pragma mark - Menu
 
 - (void)generateMenu {
-	_topLevelMenuItem = [[NSMenuItem alloc] initWithTitle:@"openFrameworks"
-												   action:@selector(menuSelected:)
-											keyEquivalent:@""];
+	_topLevelMenuItem = [[NSMenuItem alloc] initWithTitle:@"openFrameworks" action:@selector(menuSelected:) keyEquivalent:@""];
 	[_topLevelMenuItem setTarget:self];
 	
 	_OFMenu = [[NSMenu alloc] initWithTitle:@"OF"];
@@ -200,17 +198,17 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	
 	@try {
 		id /* IDEWorkspaceDocument */ document = [[[NSApp keyWindow] windowController] document];
-		id /* IDEWorkspace */ workspace = objc_msgSend(document, @selector(workspace));
-		id /* Xcode3Project */ container = objc_msgSend(workspace, @selector(wrappedXcode3Project));
-		id /* PBXProject */ project = objc_msgSend(container, @selector(pbxProject));
-		id /* Xcode3Group */ rootGroup = objc_msgSend(container, @selector(rootGroup));
+		id /* IDEWorkspace */ workspace = [document workspace];
+		id /* Xcode3Project */ container = [workspace wrappedXcode3Project];
+		id /* PBXProject */ project = [container pbxProject];
+		id /* Xcode3Group */ rootGroup = [container rootGroup];
 		id /* Xcode3Group */ addonsGroup = [self findGroupNamed:@"addons" fromRoot:rootGroup];
 		
 		[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path isDirectory:YES]
 					  forPlatform:[self detectPlatformFromRootGroup:rootGroup]];
 		
 		if(addonsGroup) {
-			NSArray * targets = objc_msgSend(project, @selector(targets));
+			NSArray * targets = [project targets];
 			[self addAddon:addon toGroup:addonsGroup andTargets:targets inProject:project];
 			[self modifyBuildSettingsInTargets:targets forAddon:addon];
 		} else {
@@ -233,22 +231,22 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 - (void)addAddon:(OFAddon *)addon toGroup:(id /* Xcode3Group */)addonsGroup andTargets:(NSArray *)targets inProject:(id /* PBXProject */)project {
 	
-	id /* PBXGroup */ addonsPbxGroup = objc_msgSend(addonsGroup, @selector(group));
-    id /* PBXGroup */ newPbxGroup = objc_msgSend(NSClassFromString(@"PBXGroup"), @selector(groupWithName:), addon.name);
+	id /* PBXGroup */ addonsPbxGroup = [addonsGroup group];
+	id /* PBXGroup */ newPbxGroup = [NSClassFromString(@"PBXGroup") groupWithName:addon.name];
 	[addonsPbxGroup insertItem:newPbxGroup atIndex:0];
 	
 	// add "src" and "libs"
-	objc_msgSend(newPbxGroup, @selector(addFiles:copy:createGroupsRecursively:), [self srcAndLibsFoldersForAddon:addon], NO, YES);
+	[newPbxGroup addFiles:[self srcAndLibsFoldersForAddon:addon] copy:NO createGroupsRecursively:YES];
 	
 	// add any system frameworks
-	objc_msgSend(newPbxGroup, @selector(addFiles:copy:createGroupsRecursively:), [self systemFrameworksForAddon:addon], NO, YES);
+	[newPbxGroup addFiles:[self systemFrameworksForAddon:addon] copy:NO createGroupsRecursively:YES];
 	
 	// add any extra libs
 	NSArray * extraLibs = addon.extraLibPaths;
-	NSString * projectPath = [objc_msgSend(project, @selector(path)) stringByDeletingLastPathComponent];
+	NSString * projectPath = [[project path] stringByDeletingLastPathComponent];
 	for(NSString * libPath in extraLibs) {
 		NSString * fullLibPath = [NSString stringWithFormat:@"%@/%@", projectPath, libPath];
-		objc_msgSend(newPbxGroup, @selector(addFiles:copy:createGroupsRecursively:), @[fullLibPath], 0, YES);
+		[newPbxGroup addFiles:@[fullLibPath] copy:NO createGroupsRecursively:YES];
 	}
 	
 	// remove stuff excluded by addons_config.mk
@@ -334,7 +332,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		}];
 		
 		if(childrenToRemove.count > 0) {
-			objc_msgSend(group, @selector(removeItemsAtIndexes:), childrenToRemove);
+			[group removeItemsAtIndexes:childrenToRemove];
 		}
 	}
 }
@@ -351,12 +349,12 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		id node = [queue objectAtIndex:0];
 		[queue removeObjectAtIndex:0];
 		
-		NSString * nodeName = objc_msgSend(node, @selector(name));
+		NSString * nodeName = [node name];
 		if([nodeName caseInsensitiveCompare:targetName] == NSOrderedSame) {
 			return node;
 		} else {
 			if([node respondsToSelector:@selector(subitems)]) {
-				NSArray * subitems = objc_msgSend(node, @selector(subitems));
+				NSArray * subitems = [node subitems];
 				for(id item in subitems) {
 					[queue addObject:item];
 				}
@@ -369,7 +367,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 - (void) addSourceFilesAndLibsFromGroup:(id /* Xcode3Group */)group toTargets:(NSArray *)targets {
 	
-	id /* PBXGroupEnumerator */ pbxGroupEnumerator = objc_msgSend(group, @selector(groupEnumerator));
+	id /* PBXGroupEnumerator */ pbxGroupEnumerator = [group groupEnumerator];
 	
 	NSMutableArray * referencesToAdd = [[NSMutableArray alloc] init];
 	for(id item in pbxGroupEnumerator) {
@@ -380,7 +378,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	// add source file, library and framework references to all targets
 	for(id target in targets) {
 		for (id ref in referencesToAdd) {
-			objc_msgSend(target, @selector(addReference:), ref);
+			[target addReference:ref];
 		}
 	}
 }
@@ -389,13 +387,13 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	
 	if([item class] != NSClassFromString(@"PBXFileReference")) return NO;
 	
-	id /* PBXFileType */ fileType = objc_msgSend(item, @selector(fileType));
-	NSString * fileUTI = objc_msgSend(fileType, @selector(UTI));
+	id /* PBXFileType */ fileType = [item fileType];
+	NSString * fileUTI = [fileType UTI];
 	
 	if([fileUTI rangeOfString:@"source"].location != NSNotFound || // is a source file?
 	   [fileUTI rangeOfString:@"header"].location != NSNotFound || // is a header file?
-	   ((BOOL (*)(id, SEL))objc_msgSend)(fileType, @selector(isStaticLibrary)) || // is a static lib?
-	   ((BOOL (*)(id, SEL))objc_msgSend)(fileType, @selector(isFramework))) // is a framework?
+	   [fileType isStaticLibrary] ||
+	   [fileType isFramework])
 	{
 		return YES;
 	}
@@ -414,16 +412,17 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 - (void)modifyBuildSettingsInTargets:(NSArray * /* PBXTarget */)targets forAddon:(OFAddon *)addon {
 	
 	for(id /* PBXTarget */ target in targets) {
-		id /* XCConfigurationList */ configurationList = objc_msgSend(target, @selector(buildConfigurationList));
-		NSArray * buildConfigurationNames = objc_msgSend(configurationList, @selector(buildConfigurationNames));
+		id /* XCConfigurationList */ configList = [target buildConfigurationList];
+		NSArray * buildConfigurationNames = [configList buildConfigurationNames];
 		
 		for(NSString * configName in buildConfigurationNames) {
-			NSArray * settings = objc_msgSend(configurationList, @selector(buildSettingDictionariesForConfigurationName:errors:), configName, nil);
+			NSArray * settings = [configList buildSettingDictionariesForConfigurationName:configName errors:nil];
 			for(id /* DVTMacroDefinitionTable */ macroTable in settings) {
 				[self addPaths:addon.extraHeaderSearchPaths forSetting:@"USER_HEADER_SEARCH_PATHS" toTable:macroTable];
 			}
 		}
-		objc_msgSend(configurationList, @selector(invalidateCaches));
+		
+		[configList invalidateCaches];
 	}
 }
 
@@ -431,7 +430,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	
 	if(!paths || !table) return;
 	
-	NSArray * currentPaths = objc_msgSend(table, @selector(valueForKey:), setting);
+	NSArray * currentPaths = [table valueForKey:setting];
 	NSArray * modifiedPaths = nil;
 	
 	if(currentPaths) {
@@ -440,7 +439,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		modifiedPaths = paths;
 	}
 	
-	objc_msgSend(table, @selector(setObject:forKeyedSubscript:), modifiedPaths, setting);
+	table[setting] = modifiedPaths;
 }
 
 - (NSArray *) srcAndLibsFoldersForAddon:(OFAddon *)addon {
@@ -662,10 +661,10 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 - (NSTextView *) consoleView {
 	id workspaceController = [[NSApp keyWindow] windowController];
-	id editorArea = objc_msgSend(workspaceController, @selector(editorArea));
-    id activeDebuggerArea = objc_msgSend(editorArea, @selector(activeDebuggerArea));
-    id consoleArea = objc_msgSend(activeDebuggerArea, @selector(consoleArea));
-    return (NSTextView *)[consoleArea valueForKeyPath:@"_consoleView"];
+	id editorArea = [workspaceController editorArea];
+	id activeDebuggerArea = [editorArea activeDebuggerArea];
+	id consoleArea = [activeDebuggerArea consoleArea];
+	return (NSTextView *)[consoleArea valueForKeyPath:@"_consoleView"];
 }
 
 @end

@@ -16,6 +16,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6600E5A6183DC3BD003D57FB /* NSObject+OFPluginXcodePrivateMethods.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+OFPluginXcodePrivateMethods.h"; sourceTree = "<group>"; };
 		6671EB57182F00040050B812 /* OFAddon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OFAddon.h; sourceTree = "<group>"; };
 		6671EB58182F00040050B812 /* OFAddon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OFAddon.m; sourceTree = "<group>"; };
 		66B17736182F06CB007AE57F /* OFAddonMenuItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OFAddonMenuItem.h; sourceTree = "<group>"; };
@@ -78,6 +79,7 @@
 				6671EB58182F00040050B812 /* OFAddon.m */,
 				66B17736182F06CB007AE57F /* OFAddonMenuItem.h */,
 				66B17737182F06CB007AE57F /* OFAddonMenuItem.m */,
+				6600E5A6183DC3BD003D57FB /* NSObject+OFPluginXcodePrivateMethods.h */,
 				66C4B8AE182EB24200C2AA97 /* Supporting Files */,
 			);
 			path = OFPlugin;
