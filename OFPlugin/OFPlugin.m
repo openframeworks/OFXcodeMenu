@@ -6,13 +6,13 @@
 NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 @interface OFPlugin() {
-	
 	NSMenu * _OFMenu;
 	NSMenu * _addonsListMenu;
 	NSString * _addonsPath;
 	NSMenuItem * _topLevelMenuItem;
 	NSMenuItem * _addAddonItem;
 	NSMenuItem * _websiteItem;
+	NSString * _platform;
 }
 
 @property (nonatomic, strong) NSBundle * bundle;
@@ -38,7 +38,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	if (self = [super init]) {
 		self.bundle = plugin;
 		[self generateMenu];
-		
+		_platform = @"osx";
 		_addonsPath = [[NSUserDefaults standardUserDefaults] stringForKey:kOpenFrameworksAddonsPath];
 		if(!_addonsPath) {
 			[self setAddonsPath:[@"~/openFrameworks/addons/" stringByExpandingTildeInPath]];
@@ -204,8 +204,9 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		id /* Xcode3Group */ rootGroup = [container rootGroup];
 		id /* Xcode3Group */ addonsGroup = [self findGroupNamed:@"addons" fromRoot:rootGroup];
 		
-		[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path isDirectory:YES]
-					  forPlatform:[self detectPlatformFromRootGroup:rootGroup]];
+		_platform = [self detectPlatformFromRootGroup:rootGroup];
+		
+		[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path isDirectory:YES] forPlatform:_platform];
 		
 		if(addonsGroup) {
 			NSArray * targets = [project targets];
@@ -249,7 +250,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		[newPbxGroup addFiles:@[fullLibPath] copy:NO createGroupsRecursively:YES];
 	}
 	
-	// remove stuff excluded by addons_config.mk
+	// remove stuff excluded by addons_config.mk, or stuff that's for other platforms
 	[self recursivelyRemoveFilesInGroup:newPbxGroup forAddon:addon path:@""];
 	
 	// add all the new stuff to the project's build phases in all targets
@@ -309,7 +310,22 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	} else {
 		__block NSMutableIndexSet * childrenToRemove = [[NSMutableIndexSet alloc] init];
 		
+		// first, check if this is a group with platform-specific folders to remove (e.g. windows, osx, linux, android...)
+		__block NSMutableIndexSet * otherPlatformFolders = nil;
 		[[group children] enumerateObjectsUsingBlock:^(id child, NSUInteger idx, BOOL *stop) {
+			if([[child name] isEqualToString:_platform]) {
+				otherPlatformFolders = [NSMutableIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [[group children] count])];
+				[otherPlatformFolders removeIndex:idx];
+			}
+		}];
+		
+		if(otherPlatformFolders) {
+			[group removeItemsAtIndexes:otherPlatformFolders];
+		}
+		
+		// then, recursively remove any folders the addon would like us to ignore (based on addon_config.mk)
+		[[group children] enumerateObjectsUsingBlock:^(id child, NSUInteger idx, BOOL *stop) {
+			
 			if([child class] == groupClass) {
 				NSString * seperator = [path isEqualToString:@""] ? @"" : @"/";
 				NSString * nextPath = [[path stringByAppendingString:seperator] stringByAppendingString:[child name]];
