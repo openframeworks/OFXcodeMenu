@@ -212,6 +212,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 			NSArray * targets = [project targets];
 			[self addAddon:addon toGroup:addonsGroup andTargets:targets inProject:project];
 			[self modifyBuildSettingsInTargets:targets forAddon:addon];
+			[self handleUnresolvedDependenciesInAddon:addon];
 		} else {
 			[[NSAlert alertWithMessageText:@"Couldn't find an \"addons\" group"
 							 defaultButton:@"Oh, right"
@@ -219,8 +220,6 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 							   otherButton:nil
 				 informativeTextWithFormat:@"You should have a group called \"addons\" in your project"] runModal];
 		}
-		
-		[self handleUnresolvedDependenciesInAddon:addon];
 	}
 	@catch (NSException *exception) {
 		NSLog(@"OFPlugin problem! (please report the issue at https://github.com/admsyn/OFPlugin) : %@", exception);
