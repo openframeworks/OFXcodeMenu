@@ -315,6 +315,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 			if([[child name] isEqualToString:_platform]) {
 				otherPlatformFolders = [NSMutableIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [[group children] count])];
 				[otherPlatformFolders removeIndex:idx];
+				*stop = YES;
 			}
 		}];
 		
@@ -382,10 +383,10 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 - (void) addSourceFilesAndLibsFromGroup:(id /* Xcode3Group */)group toTargets:(NSArray *)targets {
 	
-	id /* PBXGroupEnumerator */ pbxGroupEnumerator = [group groupEnumerator];
+	id /* PBXGroupEnumerator */ groupEnumerator = [group groupEnumerator];
 	
 	NSMutableArray * referencesToAdd = [[NSMutableArray alloc] init];
-	for(id item in pbxGroupEnumerator) {
+	for(id item in groupEnumerator) {
 		if([self shouldAddItemToTarget:item]) {
 			[referencesToAdd addObject:item];
 		}
@@ -458,6 +459,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 }
 
 - (NSArray *) srcAndLibsFoldersForAddon:(OFAddon *)addon {
+	
 	NSArray * paths = @[[addon.path stringByAppendingString:@"src"], [addon.path stringByAppendingString:@"libs"]];
 	NSMutableArray * folders = [[NSMutableArray alloc] init];
 	for(NSString * path in paths) {
@@ -484,6 +486,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	
 	NSDictionary * ctx = (__bridge_transfer NSDictionary *)(contextInfo);
 	NSArray * dependencies = ctx[@"deps"];
+	
 	if(returnCode == NSAlertDefaultReturn) {
 		NSURL * jsonURL = [NSURL URLWithString:@"http://ofxaddons.com/api/v1/all.json"];
 		NSURLRequest * req = [NSURLRequest requestWithURL:jsonURL];
