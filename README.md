@@ -3,11 +3,11 @@ OFPlugin
 
 OpenFrameworks plugin for Xcode 5 that adds addons to open projects.
 
-You can get a pre-compiled version of this addon at [adamcarlucci.com/ofplugin.zip](http://adamcarlucci.com/ofplugin.zip)
-
 Building the included Xcode project will install the plugin. To do it manually, put OFPlugin.xcplugin in ~/Library/Application Support/Developer/Shared/Xcode/Plug-ins/OFPlugin.xcplugin
 
-In theory it'll work on Xcode 4 as well, but you'll need to enable garbage collection when building the plugin.
+You can get a pre-compiled version of this addon at [adamcarlucci.com/ofplugin.zip](http://adamcarlucci.com/ofplugin.zip), though it'll be much easier to stay up to date by cloning this repo.
+
+![screenshot](screenshot.jpg "it does this")
 
 Addon Writers!
 --------------
@@ -16,4 +16,3 @@ The plugin parses addons_config.mk and will use it to tell which system framewor
 
 If OFPlugin doesn't seem to be parsing your addon_config.mk properly, please [open an issue](https://github.com/admsyn/OFPlugin/issues).
 
-![screenshot](screenshot.jpg "it does this")
