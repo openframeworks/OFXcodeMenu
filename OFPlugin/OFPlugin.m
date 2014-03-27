@@ -209,10 +209,15 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		[addon setMetadataFromURL:[NSURL fileURLWithPath:addon.path isDirectory:YES] forPlatform:_platform];
 		
 		if(addonsGroup) {
-			NSArray * targets = [project targets];
-			[self addAddon:addon toGroup:addonsGroup andTargets:targets inProject:project];
-			[self modifyBuildSettingsInTargets:targets forAddon:addon];
+			
+			if(![self group:addonsGroup containsGroupNamed:addon.name]) {
+				NSArray * targets = [project targets];
+				[self addAddon:addon toGroup:addonsGroup andTargets:targets inProject:project];
+				[self modifyBuildSettingsInTargets:targets forAddon:addon];
+			}
+			
 			[self handleUnresolvedDependenciesInAddon:addon];
+			
 		} else {
 			[[NSAlert alertWithMessageText:@"Couldn't find an \"addons\" group"
 							 defaultButton:@"Oh, right"
@@ -379,6 +384,22 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 	
 	return nil;
+}
+
+- (BOOL)group:(id /* Xcode3Group */)group containsGroupNamed:(NSString *)targetName {
+	
+	BOOL found = NO;
+	if([group respondsToSelector:@selector(subitems)]) {
+		NSArray * subitems = [group subitems];
+		for(id item in subitems) {
+			if([[item name] caseInsensitiveCompare:targetName] == NSOrderedSame) {
+				found = YES;
+				break;
+			}
+		}
+	}
+	
+	return found;
 }
 
 - (void) addSourceFilesAndLibsFromGroup:(id /* Xcode3Group */)group toTargets:(NSArray *)targets {
