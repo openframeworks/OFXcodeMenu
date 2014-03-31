@@ -182,6 +182,47 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	return [NSString stringWithFormat:@"%@/%@/", _addonsPath, addonName];
 }
 
+// No relative path utils in Cocoa (afaict) :/
+// Treating paths as strings is bad. I know. This is pretty ick but it "works".
+- (NSString *)relativePathFromProjectToURL:(NSURL *)targetURL {
+	NSURL * projectURL = [[[[NSApp keyWindow] windowController] document] fileURL];
+	NSMutableArray * projectPath = [[projectURL pathComponents] mutableCopy];
+    NSMutableArray * targetPath = [[targetURL pathComponents] mutableCopy];
+	
+	// going up a level, since the "document" is the .xcworkspace inside the actual .xcodeproj
+	[projectPath removeLastObject];
+	[projectPath removeLastObject];
+	
+	NSIndexSet * commonPrelude = [projectPath indexesOfObjectsPassingTest:^BOOL(NSString * a, NSUInteger idx, BOOL *stop) {
+		if(idx >= targetPath.count) {
+			*stop = YES;
+			return YES;
+		}
+		
+		NSComparisonResult result = [a compare:targetPath[idx]];
+		
+		if(result == NSOrderedSame) {
+			return YES;
+		} else {
+			*stop = YES;
+			return NO;
+		}
+	}];
+	
+	[projectPath removeObjectsAtIndexes:commonPrelude];
+	[targetPath removeObjectsAtIndexes:commonPrelude];
+	
+	NSMutableArray * relativePath = [[NSMutableArray alloc] init];
+	
+	for(int i = 0; i < projectPath.count; i++) {
+		[relativePath addObject:@".."];
+	}
+	
+	[relativePath addObjectsFromArray:targetPath];
+    
+	return [NSString pathWithComponents:relativePath];
+}
+
 #pragma mark - Actions
 
 - (void)addAddonForMenuItem:(OFAddonMenuItem *)addonMenuItem {
@@ -448,6 +489,16 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 - (void)modifyBuildSettingsInTargets:(NSArray * /* PBXTarget */)targets forAddon:(OFAddon *)addon {
 	
+	// finding paths to add to USER_HEADER_SEARCH_PATHS
+	NSArray * sourcePaths = [self srcAndLibsFoldersForAddon:addon];
+	NSMutableArray * includePaths = [[NSMutableArray alloc] init];
+	
+	for(NSString * path in sourcePaths) {
+		[includePaths addObjectsFromArray:[self subdirectoriesNamed:@"include" fromPath:path]];
+	}
+	
+	[includePaths addObjectsFromArray:addon.extraHeaderSearchPaths];
+	
 	for(id /* PBXTarget */ target in targets) {
 		id /* XCConfigurationList */ configList = [target buildConfigurationList];
 		NSArray * buildConfigurationNames = [configList buildConfigurationNames];
@@ -455,7 +506,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		for(NSString * configName in buildConfigurationNames) {
 			NSArray * settings = [configList buildSettingDictionariesForConfigurationName:configName errors:nil];
 			for(id /* DVTMacroDefinitionTable */ macroTable in settings) {
-				[self addPaths:addon.extraHeaderSearchPaths forSetting:@"USER_HEADER_SEARCH_PATHS" toTable:macroTable];
+				[self addPaths:includePaths forSetting:@"USER_HEADER_SEARCH_PATHS" toTable:macroTable];
 			}
 		}
 		
@@ -467,16 +518,10 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	
 	if(!paths || !table) return;
 	
-	NSArray * currentPaths = [table valueForKey:setting];
-	NSArray * modifiedPaths = nil;
+	NSMutableSet * modifiedPaths = [NSMutableSet setWithArray:table[setting]];
+	[modifiedPaths addObjectsFromArray:paths];
 	
-	if(currentPaths) {
-		modifiedPaths = [currentPaths arrayByAddingObjectsFromArray:paths];
-	} else {
-		modifiedPaths = paths;
-	}
-	
-	table[setting] = modifiedPaths;
+	table[setting] = [modifiedPaths allObjects];
 }
 
 - (NSArray *) srcAndLibsFoldersForAddon:(OFAddon *)addon {
@@ -499,6 +544,29 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 	
 	return frameworkPaths;
+}
+
+- (NSArray *) subdirectoriesNamed:(NSString *)targetName fromPath:(NSString *)rootPath {
+	
+	NSMutableArray * hits = [[NSMutableArray alloc] init];
+	NSURL * rootPathURL = [NSURL fileURLWithPath:rootPath];
+	NSDirectoryEnumerator * dirEnum = [[NSFileManager defaultManager] enumeratorAtURL:rootPathURL
+														   includingPropertiesForKeys:@[NSURLIsDirectoryKey]
+																			  options:NSDirectoryEnumerationSkipsHiddenFiles
+																		 errorHandler:nil];
+	
+	for(NSURL * url in dirEnum) {
+		NSNumber * isDirectory = nil;
+		[url getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:nil];
+		
+		if([isDirectory boolValue] &&
+		   [[url lastPathComponent] caseInsensitiveCompare:targetName] == NSOrderedSame)
+		{
+			NSString * p = [self relativePathFromProjectToURL:url];
+			[hits addObject:[p stringByAppendingString:@"/"]]; // add trailing slash
+		}
+	}
+	return hits;
 }
 
 #pragma mark - Dependency Utils
