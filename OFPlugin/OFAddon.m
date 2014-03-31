@@ -61,7 +61,7 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 	if(_config[kIncludes]) {
 		return _config[kIncludes];
 	} else if([self.name isEqualToString:@"ofxCv"]) {
-		return @[@"../../../addons/ofxOpenCv/libs/opencv/include/", @"../../../addons/ofxCv/libs/ofxCv/include/"];
+		return @[@"../../../addons/ofxOpenCv/libs/opencv/include/"];
 	} else if([self.name isEqualToString:@"ofxOsc"]){
 		return @[@"../../../addons/ofxOsc/libs/oscpack/src/"];
 	} else {

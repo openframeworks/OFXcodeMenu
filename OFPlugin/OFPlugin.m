@@ -427,7 +427,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	return nil;
 }
 
-- (BOOL)group:(id /* Xcode3Group */)group containsGroupNamed:(NSString *)targetName {
+- (BOOL) group:(id /* Xcode3Group */)group containsGroupNamed:(NSString *)targetName {
 	
 	BOOL found = NO;
 	if([group respondsToSelector:@selector(subitems)]) {
