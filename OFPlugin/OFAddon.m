@@ -15,17 +15,15 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 
 @implementation OFAddon
 
-+ (id) addonWithPath:(NSString *)path name:(NSString *)name
-{
++ (id) addonWithPath:(NSString *)path name:(NSString *)name {
 	OFAddon * a = [[self alloc] init];
 	a.path = path;
 	a.name = name;
 	return a;
 }
 
-- (id)init
-{
-    self = [super init];
+- (id)init {
+	self = [super init];
     if (self) {
         _config = [[NSMutableDictionary alloc] init];
     }
@@ -36,6 +34,14 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 
 - (NSString *) url {
 	return [_config[kURL] objectAtIndex:0];
+}
+
+- (NSArray *)includeFoldersToExclude {
+	return _config[kIncludesToExclude];
+}
+
+- (NSArray *)dependencies {
+	return _config[kDependencies];
 }
 
 - (NSArray *)sourceFoldersToExclude {
@@ -49,15 +55,8 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 	return nil;
 }
 
-- (NSArray *)includeFoldersToExclude {
-	return _config[kIncludesToExclude];
-}
-
-- (NSArray *)dependencies {
-	return _config[kDependencies];
-}
-
 - (NSArray *)extraHeaderSearchPaths {
+	
 	if(_config[kIncludes]) {
 		return _config[kIncludes];
 	} else if([self.name isEqualToString:@"ofxCv"]) {
@@ -115,6 +114,7 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 }
 
 - (void) parseSetting:(NSString *)setting {
+	
 	NSString * name = [self firstHitForRegex:@"[[A-Z]_]+" inString:setting];
 	NSString * operator = [self firstHitForRegex:@"(\\+|=)+" inString:setting];
 	NSString * content = [self firstHitForRegex:@"[^=]+$" inString:setting];

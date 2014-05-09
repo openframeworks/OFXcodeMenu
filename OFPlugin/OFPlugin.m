@@ -21,8 +21,8 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 @implementation OFPlugin
 
-+ (void)pluginDidLoad:(NSBundle *)plugin
-{
++ (void)pluginDidLoad:(NSBundle *)plugin {
+	
 	static id sharedPlugin = nil;
 	static dispatch_once_t onceToken;
 	NSString * currentAppName = [[NSBundle mainBundle] infoDictionary][@"CFBundleName"];
@@ -52,6 +52,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 #pragma mark - Menu
 
 - (void)generateMenu {
+	
 	_topLevelMenuItem = [[NSMenuItem alloc] initWithTitle:@"openFrameworks" action:@selector(menuSelected:) keyEquivalent:@""];
 	[_topLevelMenuItem setTarget:self];
 	
@@ -116,8 +117,8 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 #pragma mark - Addons directory
 
-- (void)scanAddons
-{
+- (void)scanAddons {
+	
 	dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
 		NSArray * allAddons = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:_addonsPath error:nil];
 		
@@ -157,8 +158,8 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	});
 }
 
-- (void)showAddonsPathSelectionPanel:(id)sender
-{
+- (void)showAddonsPathSelectionPanel:(id)sender {
+	
 	dispatch_async(dispatch_get_main_queue(), ^{
 		NSOpenPanel * openPanel = [NSOpenPanel openPanel];
 		[openPanel setDirectoryURL:[NSURL fileURLWithPath:[@"~" stringByExpandingTildeInPath]]];
@@ -185,21 +186,23 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 // No relative path utils in Cocoa (afaict) :/
 // Treating paths as strings is bad. I know. This is pretty ick but it "works".
 - (NSString *)relativePathFromProjectToURL:(NSURL *)targetURL {
+	
 	NSURL * projectURL = [[[[NSApp keyWindow] windowController] document] fileURL];
 	NSMutableArray * projectPath = [[projectURL pathComponents] mutableCopy];
-    NSMutableArray * targetPath = [[targetURL pathComponents] mutableCopy];
+	NSMutableArray * targetPath = [[targetURL pathComponents] mutableCopy];
 	
-	// going up a level, since the "document" is the .xcworkspace inside the actual .xcodeproj
+	// going up two levels, since the "document" is the .xcworkspace inside the .xcodeproj
+	// i.e. [ .. project.xcodeproj, project.xcworkspace ]
 	[projectPath removeLastObject];
 	[projectPath removeLastObject];
 	
-	NSIndexSet * commonPrelude = [projectPath indexesOfObjectsPassingTest:^BOOL(NSString * a, NSUInteger idx, BOOL *stop) {
-		if(idx >= targetPath.count) {
+	NSIndexSet * commonPrelude = [projectPath indexesOfObjectsPassingTest:^BOOL(NSString * a, NSUInteger i, BOOL *stop) {
+		if(i >= targetPath.count) {
 			*stop = YES;
 			return YES;
 		}
 		
-		NSComparisonResult result = [a compare:targetPath[idx]];
+		NSComparisonResult result = [a compare:targetPath[i]];
 		
 		if(result == NSOrderedSame) {
 			return YES;
@@ -219,7 +222,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 	
 	[relativePath addObjectsFromArray:targetPath];
-    
+
 	return [NSString pathWithComponents:relativePath];
 }
 
@@ -752,6 +755,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 #pragma mark - Extra Utils
 
 - (void)printToConsole:(NSString *)string {
+	
 	dispatch_async(dispatch_get_main_queue(), ^{
 		@try {
 			NSAttributedString * attrString = [[NSAttributedString alloc] initWithString:string attributes:[[self consoleView] typingAttributes]];
