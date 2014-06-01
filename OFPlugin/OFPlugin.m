@@ -529,7 +529,10 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 
 - (NSArray *) srcAndLibsFoldersForAddon:(OFAddon *)addon {
 	
-	NSArray * paths = @[[addon.path stringByAppendingString:@"src"], [addon.path stringByAppendingString:@"libs"]];
+	NSArray * paths = @[[addon.path stringByAppendingString:@"src"],
+						[addon.path stringByAppendingString:@"libs"],
+						[addon.path stringByAppendingString:@"lib"]];
+	
 	NSMutableArray * folders = [[NSMutableArray alloc] init];
 	for(NSString * path in paths) {
 		if([[NSFileManager defaultManager] fileExistsAtPath:path]) {
