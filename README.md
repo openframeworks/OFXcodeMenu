@@ -1,9 +1,16 @@
 OFPlugin
 ========
 
-OpenFrameworks plugin for Xcode that adds addons to open projects.
+OpenFrameworks plugin for Xcode that adds addons to your project.
 
-Building the included Xcode project will install the plugin. To do it manually, put OFPlugin.xcplugin in ~/Library/Application Support/Developer/Shared/Xcode/Plug-ins/OFPlugin.xcplugin
+Installing
+==========
+
+Building the included Xcode project will install the plugin. To do it manually, put OFPlugin.xcplugin in:
+
+    ~/Library/Application Support/Developer/Shared/Xcode/Plug-ins/OFPlugin.xcplugin
+
+You may need to create a few of the directories on the way, as they don't all exist by default.
 
 You can get a pre-compiled version of this addon at [adamcarlucci.com/ofplugin.zip](http://adamcarlucci.com/ofplugin.zip), though it'll be much easier to stay up to date by cloning this repo. 
 
