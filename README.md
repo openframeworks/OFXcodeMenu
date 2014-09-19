@@ -1,7 +1,7 @@
 OFPlugin
 ========
 
-OpenFrameworks plugin for Xcode that adds addons to your project.
+[OpenFrameworks](http://openframeworks.cc) plugin for Xcode that adds addons to your project. Compatible with Xcode 5 and 6 on OS X 10.8+.
 
 Installing
 ==========
@@ -15,10 +15,6 @@ You may need to create a few of the directories on the way, as they don't all ex
 You can get a pre-compiled version of this addon at [adamcarlucci.com/ofplugin.zip](http://adamcarlucci.com/ofplugin.zip), though it'll be much easier to stay up to date by cloning this repo. 
 
 ![screenshot](screenshot.jpg "it does this")
-
-Known Compatibility
-===================
-Should work on OSX 10.8+ with all versions of Xcode 5, as well as the Xcode 6 beta.
 
 Troubleshooting
 ===============
