@@ -257,18 +257,6 @@
 				GCC_WARN_UNDECLARED_SELECTOR = NO;
 				INFOPLIST_FILE = "OFPlugin/OFPlugin-Info.plist";
 				INSTALL_PATH = "/Library/Application Support/Developer/Shared/Xcode/Plug-ins";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/openal/libs/vs2010/EFX-Util_MT",
-					"/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/openal/libs/vs2010/EFX-Util_MTDLL",
-					/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/openal/libs/vs2010,
-					"/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/openal/libs/win_cb/EFX-Util_MT",
-					"/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/openal/libs/win_cb/EFX-Util_MTDLL",
-					/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/openal/libs/win_cb,
-					/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/sndfile/lib/osx,
-					/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/sndfile/lib/vs2010,
-					/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/sndfile/lib/win_cb,
-				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "";
 				WRAPPER_EXTENSION = xcplugin;
@@ -286,18 +274,6 @@
 				GCC_WARN_UNDECLARED_SELECTOR = NO;
 				INFOPLIST_FILE = "OFPlugin/OFPlugin-Info.plist";
 				INSTALL_PATH = "/Library/Application Support/Developer/Shared/Xcode/Plug-ins";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/openal/libs/vs2010/EFX-Util_MT",
-					"/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/openal/libs/vs2010/EFX-Util_MTDLL",
-					/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/openal/libs/vs2010,
-					"/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/openal/libs/win_cb/EFX-Util_MT",
-					"/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/openal/libs/win_cb/EFX-Util_MTDLL",
-					/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/openal/libs/win_cb,
-					/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/sndfile/lib/osx,
-					/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/sndfile/lib/vs2010,
-					/Users/adam/workspace/openFrameworks/addons/ofxTimeline/libs/sndfile/lib/win_cb,
-				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "";
 				WRAPPER_EXTENSION = xcplugin;
