@@ -495,7 +495,19 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	for(id target in targets) {
 		
 		NSArray * copyFilesPhases = [target copyFilesBuildPhases];
-		id copyPhase = [copyFilesPhases firstObject];
+		NSUInteger copyPhaseIdx = [copyFilesPhases indexOfObjectPassingTest:^BOOL(id obj, NSUInteger i, BOOL *s) {
+			return [obj destinationSubfolder] == kPBXCopyFilesBuildPhaseFrameworksDestination;
+		}];
+		
+		id copyPhase = nil;
+		
+		if(copyPhaseIdx != NSNotFound) {
+			copyPhase = copyFilesPhases[copyPhaseIdx];
+		} else {
+			copyPhase = [[NSClassFromString(@"PBXCopyFilesBuildPhase") alloc] init];
+			[copyPhase setSubpath:@"" relativeToSubfolder:kPBXCopyFilesBuildPhaseFrameworksDestination];
+			[target addBuildPhase:copyPhase];
+		}
 		
 		for(id item in groupEnumerator) {
 			id phase = [target appropriateBuildPhaseForFileReference:item];

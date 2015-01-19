@@ -3,6 +3,10 @@
 // for documentation and partially to silence compiler warnings
 //
 
+// this specifies a copy files build phase with a "Frameworks" destination
+// presumably this is actually an enum and can't be extracted by otool
+static const int kPBXCopyFilesBuildPhaseFrameworksDestination = 10;
+
 @interface NSObject (OFPluginXcodePrivateMethods)
 
 // IDEWorkspaceDocument
@@ -30,10 +34,12 @@
 
 // PBXTarget
 - (BOOL) addReference:(id)reference;
+- (void) addBuildPhase:(id /* PBXBuildPhase */)arg1;
 - (id /* XCConfigurationList */) buildConfigurationList;
 - (NSArray *) buildConfigurationNames;
 - (id) appropriateBuildPhaseForFileReference:(id)arg1;
 - (id) copyFilesBuildPhases;
+- (id) defaultFrameworksBuildPhase;
 
 // PBXFileReference
 - (id /* PBXFileType */) fileType;
@@ -45,6 +51,10 @@
 
 // PBXBuildPhase
 + (id) identifier;
+
+// PBXCopyFilesBuildPhase
+- (int)destinationSubfolder;
+- (void)setSubpath:(id)arg1 relativeToSubfolder:(int)arg2;
 
 // XCConfigurationList
 - (NSArray *)buildSettingDictionariesForConfigurationName:(NSString *)name errors:(id)err;
