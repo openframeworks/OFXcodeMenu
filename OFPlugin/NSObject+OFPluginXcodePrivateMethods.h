@@ -26,11 +26,13 @@
 + (id /* PBXGroup */) groupWithName:(NSString *)name;
 - (void) addFiles:(NSArray *)files copy:(BOOL)copy createGroupsRecursively:(BOOL)recursive;
 - (void) removeItemsAtIndexes:(NSIndexSet *)indexes;
+- (void) setContainer:(id /* PBXContainer */)container;
 
 // PBXTarget
 - (BOOL) addReference:(id)reference;
 - (id /* XCConfigurationList */) buildConfigurationList;
 - (NSArray *) buildConfigurationNames;
+- (id)appropriateBuildPhaseForFileReference:(id)arg1;
 
 // PBXFileReference
 - (id /* PBXFileType */) fileType;
@@ -39,6 +41,9 @@
 - (NSString *) UTI;
 - (BOOL) isStaticLibrary;
 - (BOOL) isFramework;
+
+// PBXBuildPhase
++ (id) identifier;
 
 // XCConfigurationList
 - (NSArray *)buildSettingDictionariesForConfigurationName:(NSString *)name errors:(id)err;

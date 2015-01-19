@@ -268,6 +268,8 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	
 	id /* PBXGroup */ addonsPbxGroup = [addonsGroup group];
 	id /* PBXGroup */ newPbxGroup = [NSClassFromString(@"PBXGroup") groupWithName:addon.name];
+	[newPbxGroup setContainer:project];
+	
 	[addonsPbxGroup insertItem:newPbxGroup atIndex:0];
 	
 	// add "src" and "libs"
@@ -277,11 +279,12 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	[newPbxGroup addFiles:[self systemFrameworksForAddon:addon] copy:NO createGroupsRecursively:YES];
 	
 	// add any extra libs
-	NSArray * extraLibs = addon.extraLibPaths;
-	NSString * projectPath = [[project path] stringByDeletingLastPathComponent];
-	for(NSString * libPath in extraLibs) {
-		NSString * fullLibPath = [NSString stringWithFormat:@"%@/%@", projectPath, libPath];
-		[newPbxGroup addFiles:@[fullLibPath] copy:NO createGroupsRecursively:YES];
+	for(NSString * libPath in addon.extraLibPaths) {
+		NSURL * libURL = [NSURL fileURLWithPath:[addon.path stringByAppendingString:libPath]];
+		NSString * libPathRelative = [self relativePathFromProjectToURL:libURL];
+		if(libPathRelative) {
+			[newPbxGroup addFiles:@[libPathRelative] copy:NO createGroupsRecursively:YES];
+		}
 	}
 	
 	// remove stuff excluded by addons_config.mk, or stuff that's for other platforms
@@ -486,40 +489,24 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	
 	id /* PBXGroupEnumerator */ groupEnumerator = [group groupEnumerator];
 	
-	NSMutableArray * referencesToAdd = [[NSMutableArray alloc] init];
-	for(id item in groupEnumerator) {
-		if([self shouldAddItemToTarget:item]) {
-			[referencesToAdd addObject:item];
-		}
-	}
-	// add source file, library and framework references to all targets
+	id sourcePhaseID = [NSClassFromString(@"PBXSourcesBuildPhase") identifier];
+	id libPhaseID = [NSClassFromString(@"PBXFrameworksBuildPhase") identifier];
+	
 	for(id target in targets) {
-		for (id ref in referencesToAdd) {
-			[target addReference:ref];
+		for(id item in groupEnumerator) {
+			id phase = [target appropriateBuildPhaseForFileReference:item];
+			id phaseID = [[phase class] identifier];
+			
+			if(phaseID == sourcePhaseID) {
+				[target addReference:item];
+			} else if(phaseID == libPhaseID) {
+				[phase addReference:item];
+			}
 		}
 	}
-}
-
-- (BOOL) shouldAddItemToTarget:(id)item {
-	
-	if([item class] != NSClassFromString(@"PBXFileReference")) return NO;
-	
-	id /* PBXFileType */ fileType = [item fileType];
-	NSString * fileUTI = [fileType UTI];
-	
-	if([fileUTI rangeOfString:@"source"].location != NSNotFound || // is a source file?
-	   [fileUTI rangeOfString:@"header"].location != NSNotFound || // is a header file?
-	   [fileType isStaticLibrary] ||
-	   [fileType isFramework])
-	{
-		return YES;
-	}
-	
-	return NO;
 }
 
 - (NSString *) detectPlatformFromRootGroup:(id /* Xcode3Group */)rootGroup {
-	
 	id hit = [self findGroupNamed:@"iOS+OFLib.xcodeproj" fromRoot:rootGroup];
 	return hit ? @"ios" : @"osx";
 }
