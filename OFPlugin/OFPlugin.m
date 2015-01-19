@@ -371,23 +371,11 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	if(!group || [group class] != groupClass) {
 		return;
 	} else {
-		__block NSMutableIndexSet * childrenToRemove = [[NSMutableIndexSet alloc] init];
-		
-		// first, check if this is a group with platform-specific folders to remove (e.g. windows, osx, linux, android...)
-		__block NSMutableIndexSet * otherPlatformFolders = nil;
-		[[group children] enumerateObjectsUsingBlock:^(id child, NSUInteger idx, BOOL *stop) {
-			if([[child name] isEqualToString:_platform]) {
-				otherPlatformFolders = [NSMutableIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [[group children] count])];
-				[otherPlatformFolders removeIndex:idx];
-				*stop = YES;
-			}
-		}];
-		
-		if(otherPlatformFolders) {
-			[group removeItemsAtIndexes:otherPlatformFolders];
-		}
+		// first, remove invalid platform-specific folders (e.g. windows, linux, android...)
+		[self removeInvalidPlatformFoldersInGroup:group withValidPlatforms:@[_platform, @"posix"]];
 		
 		// then, recursively remove any folders the addon would like us to ignore (based on addon_config.mk)
+		__block NSMutableIndexSet * childrenToRemove = [[NSMutableIndexSet alloc] init];
 		[[group children] enumerateObjectsUsingBlock:^(id child, NSUInteger idx, BOOL *stop) {
 			
 			if([child class] == groupClass) {
@@ -414,6 +402,28 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		if(childrenToRemove.count > 0) {
 			[group removeItemsAtIndexes:childrenToRemove];
 		}
+	}
+}
+
+- (void) removeInvalidPlatformFoldersInGroup:(id /* PBXGroup */)group withValidPlatforms:(NSArray *)validPlatforms {
+	__block NSMutableIndexSet * otherPlatformFolders = nil;
+	[[group children] enumerateObjectsUsingBlock:^(id child, NSUInteger idx, BOOL *stop) {
+		if(![child children]) {
+			return;
+		}
+		
+		for(NSString * platform in validPlatforms) {
+			if([platform isEqualToString:[child name]]) {
+				otherPlatformFolders = [NSMutableIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [[group children] count])];
+				[otherPlatformFolders removeIndex:idx];
+				*stop = YES;
+				break;
+			}
+		}
+	}];
+	
+	if(otherPlatformFolders) {
+		[group removeItemsAtIndexes:otherPlatformFolders];
 	}
 }
 

@@ -45,14 +45,11 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 }
 
 - (NSArray *)sourceFoldersToExclude {
-	
 	if(_config[kSourcesToExclude]) {
 		return _config[kSourcesToExclude];
-	} else if([self.name isEqualToString:@"ofxOsc"] && !_config[kIncludes]) {
-		return @[@"libs/oscpack/src/ip/win32"];
+	} else {
+		return nil;
 	}
-	
-	return nil;
 }
 
 - (NSArray *)extraHeaderSearchPaths {
@@ -61,8 +58,6 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 		return _config[kIncludes];
 	} else if([self.name isEqualToString:@"ofxCv"]) {
 		return @[@"../../../addons/ofxOpenCv/libs/opencv/include/"];
-	} else if([self.name isEqualToString:@"ofxOsc"]){
-		return @[@"../../../addons/ofxOsc/libs/oscpack/src/"];
 	} else {
 		return nil;
 	}
@@ -136,7 +131,12 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 
 - (NSString *) rawSettingsForSection:(NSString *)section inConfig:(NSString *)config {
 
-	NSString * sectionRegex = [NSString stringWithFormat:@"%@:(.|\\n)*?\n([a-z]+:|\\z)", section];
+	// regex breakdown:
+	// (^section:\s*$) "find the section's label then.."
+	// [\s\S]+? "match anything until.."
+	// (^\w+:\s*$) "the next label"
+	
+	NSString * sectionRegex = [NSString stringWithFormat:@"(^%@:\\s*$)[\\s\\S]+?(^\\w+:\\s*$)", section];
 	NSString * relevantSection = [self firstHitForRegex:sectionRegex inString:config];
 	
 	if(relevantSection) {
@@ -150,14 +150,16 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 
 #pragma mark - Util
 
+static const NSRegularExpressionOptions regexOptions = NSRegularExpressionAnchorsMatchLines;
+
 - (NSString *) firstHitForRegex:(NSString *)regex inString:(NSString *)string {
-	NSRegularExpression * expression = [NSRegularExpression regularExpressionWithPattern:regex options:0 error:nil];
+	NSRegularExpression * expression = [NSRegularExpression regularExpressionWithPattern:regex options:regexOptions error:nil];
 	NSRange range = [expression rangeOfFirstMatchInString:string options:0 range:NSMakeRange(0, string.length)];
 	return (range.location == NSNotFound ? nil : [string substringWithRange:range]);
 }
 
 - (NSString *) stringRemovingAllHitsForRegex:(NSString *)regex fromString:(NSString *)string {
-	NSRegularExpression * expression = [NSRegularExpression regularExpressionWithPattern:regex options:0 error:nil];
+	NSRegularExpression * expression = [NSRegularExpression regularExpressionWithPattern:regex options:regexOptions error:nil];
 	return [expression stringByReplacingMatchesInString:string options:0 range:NSMakeRange(0, string.length) withTemplate:@""];
 }
 
