@@ -500,13 +500,11 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		}];
 		
 		id copyPhase = nil;
+		BOOL copyPhaseAddedToTarget = NO;
 		
 		if(copyPhaseIdx != NSNotFound) {
 			copyPhase = copyFilesPhases[copyPhaseIdx];
-		} else {
-			copyPhase = [[NSClassFromString(@"PBXCopyFilesBuildPhase") alloc] init];
-			[copyPhase setSubpath:@"" relativeToSubfolder:kPBXCopyFilesBuildPhaseFrameworksDestination];
-			[target addBuildPhase:copyPhase];
+			copyPhaseAddedToTarget = YES;
 		}
 		
 		for(id item in groupEnumerator) {
@@ -520,6 +518,14 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 				
 				// if this is a framework, add it to the copy files phase as well
 				if([[item fileType] isFramework]) {
+					
+					if(!copyPhaseAddedToTarget) {
+						copyPhase = [[NSClassFromString(@"PBXCopyFilesBuildPhase") alloc] init];
+						[copyPhase setSubpath:@"" relativeToSubfolder:kPBXCopyFilesBuildPhaseFrameworksDestination];
+						[target addBuildPhase:copyPhase];
+						copyPhaseAddedToTarget = YES;
+					}
+					
 					[copyPhase addReference:item];
 				}
 			}
