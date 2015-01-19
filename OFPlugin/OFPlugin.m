@@ -406,24 +406,35 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 }
 
 - (void) removeInvalidPlatformFoldersInGroup:(id /* PBXGroup */)group withValidPlatforms:(NSArray *)validPlatforms {
-	__block NSMutableIndexSet * otherPlatformFolders = nil;
+	__block NSMutableIndexSet * invalidIndexes = nil;
 	[[group children] enumerateObjectsUsingBlock:^(id child, NSUInteger idx, BOOL *stop) {
+		
 		if(![child children]) {
 			return;
 		}
 		
 		for(NSString * platform in validPlatforms) {
 			if([platform isEqualToString:[child name]]) {
-				otherPlatformFolders = [NSMutableIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [[group children] count])];
-				[otherPlatformFolders removeIndex:idx];
+				invalidIndexes = [NSMutableIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [[group children] count])];
+				[invalidIndexes removeIndex:idx];
 				*stop = YES;
 				break;
 			}
 		}
 	}];
 	
-	if(otherPlatformFolders) {
-		[group removeItemsAtIndexes:otherPlatformFolders];
+	if(invalidIndexes) {
+		// remove files from the list of invalid indexes
+		NSMutableIndexSet * fileIndexes = [[NSMutableIndexSet alloc] init];
+		[invalidIndexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *stop) {
+			id child = [[group children] objectAtIndex:idx];
+			if(![child children]) {
+				[fileIndexes addIndex:idx];
+			}
+		}];
+		
+		[invalidIndexes removeIndexes:fileIndexes];
+		[group removeItemsAtIndexes:invalidIndexes];
 	}
 }
 
