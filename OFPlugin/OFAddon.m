@@ -57,7 +57,7 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 	if(_config[kIncludes]) {
 		return _config[kIncludes];
 	} else if([self.name isEqualToString:@"ofxCv"]) {
-		return @[@"../../../addons/ofxOpenCv/libs/opencv/include/"];
+		return @[@"../ofxOpenCv/libs/opencv/include/"];
 	} else {
 		return nil;
 	}
@@ -65,7 +65,7 @@ NSString * const kDependencies = @"ADDON_DEPENDENCIES";
 
 - (NSArray *)extraLibPaths {
 	if([self.name isEqualToString:@"ofxCv"]) {
-		return @[@"../../../addons/ofxOpenCv/libs/opencv/lib/osx/opencv.a"];
+		return @[@"../ofxOpenCv/libs/opencv/lib/osx/opencv.a"];
 	}
 	return nil;
 }
