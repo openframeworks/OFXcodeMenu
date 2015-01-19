@@ -32,7 +32,8 @@
 - (BOOL) addReference:(id)reference;
 - (id /* XCConfigurationList */) buildConfigurationList;
 - (NSArray *) buildConfigurationNames;
-- (id)appropriateBuildPhaseForFileReference:(id)arg1;
+- (id) appropriateBuildPhaseForFileReference:(id)arg1;
+- (id) copyFilesBuildPhases;
 
 // PBXFileReference
 - (id /* PBXFileType */) fileType;

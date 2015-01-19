@@ -493,6 +493,10 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	id libPhaseID = [NSClassFromString(@"PBXFrameworksBuildPhase") identifier];
 	
 	for(id target in targets) {
+		
+		NSArray * copyFilesPhases = [target copyFilesBuildPhases];
+		id copyPhase = [copyFilesPhases firstObject];
+		
 		for(id item in groupEnumerator) {
 			id phase = [target appropriateBuildPhaseForFileReference:item];
 			id phaseID = [[phase class] identifier];
@@ -501,6 +505,11 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 				[target addReference:item];
 			} else if(phaseID == libPhaseID) {
 				[phase addReference:item];
+				
+				// if this is a framework, add it to the copy files phase as well
+				if([[item fileType] isFramework]) {
+					[copyPhase addReference:item];
+				}
 			}
 		}
 	}
