@@ -521,11 +521,15 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	NSArray * sourcePaths = [self srcAndLibsFoldersForAddon:addon];
 	NSMutableArray * includePaths = [[NSMutableArray alloc] init];
 	
-	for(NSString * path in sourcePaths) {
-		[includePaths addObjectsFromArray:[self subdirectoriesNamed:@"include" fromPath:path]];
+	for(NSString * sourcePath in sourcePaths) {
+		[includePaths addObjectsFromArray:[self subdirectoriesNamed:@"include" fromPath:sourcePath]];
 	}
 	
-	[includePaths addObjectsFromArray:addon.extraHeaderSearchPaths];
+	for(NSString * searchPath in addon.extraHeaderSearchPaths) {
+		NSString * absPath = [addon.path stringByAppendingString:searchPath];
+		NSURL * url = [NSURL fileURLWithPath:absPath];
+		[includePaths addObject:[self relativePathFromProjectToURL:url]];
+	}
 	
 	for(id /* PBXTarget */ target in targets) {
 		id /* XCConfigurationList */ configList = [target buildConfigurationList];
