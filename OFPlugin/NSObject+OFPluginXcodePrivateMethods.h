@@ -28,9 +28,11 @@ static const int kPBXCopyFilesBuildPhaseFrameworksDestination = 10;
 
 // PBXGroup
 + (id /* PBXGroup */) groupWithName:(NSString *)name;
++ (id)groupWithName:(NSString *)arg1 path:(NSString *)arg2;
 - (void) addFiles:(NSArray *)files copy:(BOOL)copy createGroupsRecursively:(BOOL)recursive;
 - (void) removeItemsAtIndexes:(NSIndexSet *)indexes;
 - (void) setContainer:(id /* PBXContainer */)container;
+- (void) addItem:(id)arg1;
 
 // PBXTarget
 - (BOOL) addReference:(id)reference;
@@ -41,8 +43,16 @@ static const int kPBXCopyFilesBuildPhaseFrameworksDestination = 10;
 - (id) copyFilesBuildPhases;
 - (id) defaultFrameworksBuildPhase;
 
+// PBXReference
+- (void)setPath:(id)path;
+- (id)resolvedAbsolutePath;
+- (id)sourceTree;
++ (BOOL)relativePathForAbsolutePath:(id)arg1 group:(id)arg2 relativePath:(id *)arg3 sourceTree:(id *)arg4;
+
 // PBXFileReference
 - (id /* PBXFileType */) fileType;
+- (id)initWithName:(id)arg1 path:(id)arg2 sourceTree:(id)arg3;
+- (void)setPath:(id)arg1 andSourceTree:(id)arg2;
 
 // PBXFileType
 - (NSString *) UTI;

@@ -277,14 +277,16 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	for(NSString * libPath in addon.extraLibPaths) {
 		NSURL * libURL = [NSURL fileURLWithPath:[addon.path stringByAppendingString:libPath]];
 		NSString * libPathRelative = [self relativePathFromProjectToURL:libURL];
-		if(libPathRelative) {
-			[newPbxGroup addFiles:@[libPathRelative] copy:NO createGroupsRecursively:YES];
-		}
+		id fileRef = [[NSClassFromString(@"PBXFileReference") alloc] initWithName:[libPath lastPathComponent]
+																			 path:libPathRelative
+																	   sourceTree:@"<group>"];
+		
+		[newPbxGroup addItem:fileRef];
 	}
 	
 	// remove stuff excluded by addons_config.mk, or stuff that's for other platforms
 	[self recursivelyRemoveFilesInGroup:newPbxGroup forAddon:addon path:@""];
-	
+
 	// add all the new stuff to the project's build phases in all targets
 	[self addSourceFilesAndLibsFromGroup:newPbxGroup toTargets:[project targets]];
 	
