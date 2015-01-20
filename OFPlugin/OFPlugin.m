@@ -241,9 +241,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		if(addonsGroup) {
 			
 			if(![self group:addonsGroup containsGroupNamed:addon.name]) {
-				NSArray * targets = [project targets];
-				[self addAddon:addon toGroup:addonsGroup andTargets:targets inProject:project];
-				[self modifyBuildSettingsInTargets:targets forAddon:addon];
+				[self addAddon:addon toGroup:addonsGroup inProject:project];
 			}
 			
 			[self handleUnresolvedDependenciesInAddon:addon];
@@ -264,13 +262,10 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 }
 
-- (void)addAddon:(OFAddon *)addon toGroup:(id /* Xcode3Group */)addonsGroup andTargets:(NSArray *)targets inProject:(id /* PBXProject */)project {
+- (void)addAddon:(OFAddon *)addon toGroup:(id /* Xcode3Group */)addonsGroup inProject:(id /* PBXProject */)project {
 	
-	id /* PBXGroup */ addonsPbxGroup = [addonsGroup group];
 	id /* PBXGroup */ newPbxGroup = [NSClassFromString(@"PBXGroup") groupWithName:addon.name];
 	[newPbxGroup setContainer:project];
-	
-	[addonsPbxGroup insertItem:newPbxGroup atIndex:0];
 	
 	// add "src" and "libs"
 	[newPbxGroup addFiles:[self srcAndLibsFoldersForAddon:addon] copy:NO createGroupsRecursively:YES];
@@ -291,10 +286,12 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	[self recursivelyRemoveFilesInGroup:newPbxGroup forAddon:addon path:@""];
 	
 	// add all the new stuff to the project's build phases in all targets
-	[self addSourceFilesAndLibsFromGroup:newPbxGroup toTargets:targets];
+	[self addSourceFilesAndLibsFromGroup:newPbxGroup toTargets:[project targets]];
 	
 	// add any external header search paths the addon requires
-	[self modifyBuildSettingsInTargets:targets forAddon:addon];
+	[self modifyBuildSettingsInTargets:[project targets] forAddon:addon];
+	
+	[[addonsGroup group] addItem:newPbxGroup];
 }
 
 - (void)handleUnresolvedDependenciesInAddon:(OFAddon *)addon {
@@ -494,6 +491,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	
 	for(id target in targets) {
 		
+		// try to find the copy files build phase, for if we need to add any frameworks to it (e.g. Syphon)
 		NSArray * copyFilesPhases = [target copyFilesBuildPhases];
 		NSUInteger copyPhaseIdx = [copyFilesPhases indexOfObjectPassingTest:^BOOL(id obj, NSUInteger i, BOOL *s) {
 			return [obj destinationSubfolder] == kPBXCopyFilesBuildPhaseFrameworksDestination;
