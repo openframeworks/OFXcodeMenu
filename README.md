@@ -16,6 +16,11 @@ You may need to create a few of the directories on the way, as they don't all ex
 
 The plugin can also be installed via the [Alcatraz](http://alcatraz.io/) Xcode package manager.
 
+Known Issues
+============
+
+When coming across static libs in addons, they will be added as absolute paths. This is due to a quirk in the Xcode API being used by OFPlugin. If you intend to share a project with other people, it is recommended that you re-add static libs yourself (by right-clicking in the project navigator and selecting "Add Files To (project name)...", for example). You can also edit the project's .pbxproj file yourself if you're feeling brave.
+
 Troubleshooting
 ===============
 
