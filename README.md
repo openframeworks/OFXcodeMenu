@@ -3,6 +3,8 @@ OFPlugin
 
 [OpenFrameworks](http://openframeworks.cc) plugin for Xcode that adds addons to your project. Compatible with Xcode 5 and 6 on OS X 10.8+.
 
+**NOTE** As of this writing (Apr 9 2015), OFPlugin does *not* yet work on Xcode 6.3
+
 ![screenshot](screenshot.jpg "it does this")
 
 Installing
