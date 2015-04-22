@@ -13,6 +13,7 @@
 		66C4B8AC182EB24200C2AA97 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66C4B8AB182EB24200C2AA97 /* Foundation.framework */; };
 		66C4B8B2182EB24200C2AA97 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 66C4B8B0182EB24200C2AA97 /* InfoPlist.strings */; };
 		66C4B8B5182EB24300C2AA97 /* OFPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 66C4B8B4182EB24300C2AA97 /* OFPlugin.m */; };
+		BE3E073C1AE84F0100C85CB6 /* IDEFoundationClassDump.txt in Resources */ = {isa = PBXBuildFile; fileRef = BE3E073B1AE84F0100C85CB6 /* IDEFoundationClassDump.txt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +30,7 @@
 		66C4B8B3182EB24300C2AA97 /* OFPlugin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OFPlugin.h; sourceTree = "<group>"; };
 		66C4B8B4182EB24300C2AA97 /* OFPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OFPlugin.m; sourceTree = "<group>"; };
 		66C4B8B6182EB24300C2AA97 /* OFPlugin-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OFPlugin-Prefix.pch"; sourceTree = "<group>"; };
+		BE3E073B1AE84F0100C85CB6 /* IDEFoundationClassDump.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = IDEFoundationClassDump.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,6 +75,7 @@
 		66C4B8AD182EB24200C2AA97 /* OFPlugin */ = {
 			isa = PBXGroup;
 			children = (
+				BE3E073B1AE84F0100C85CB6 /* IDEFoundationClassDump.txt */,
 				66C4B8B3182EB24300C2AA97 /* OFPlugin.h */,
 				66C4B8B4182EB24300C2AA97 /* OFPlugin.m */,
 				6671EB57182F00040050B812 /* OFAddon.h */,
@@ -148,6 +151,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				66C4B8B2182EB24200C2AA97 /* InfoPlist.strings in Resources */,
+				BE3E073C1AE84F0100C85CB6 /* IDEFoundationClassDump.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
