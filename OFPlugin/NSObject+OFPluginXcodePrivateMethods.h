@@ -13,7 +13,7 @@ static const int kPBXCopyFilesBuildPhaseFrameworksDestination = 10;
 - (id /* IDEWorkspace */ ) workspace;
 
 // IDEWorkspace
-- (id /* Xcode3Project */) wrappedXcode3Project;
+- (id /* Container */) wrappedContainer;
 
 // Xcode3Project
 - (id /* PBXProject */) pbxProject;
