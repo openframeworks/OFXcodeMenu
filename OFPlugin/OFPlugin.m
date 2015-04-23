@@ -229,7 +229,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	@try {
 		id /* IDEWorkspaceDocument */ document = [[[NSApp keyWindow] windowController] document];
 		id /* IDEWorkspace */ workspace = [document workspace];
-		id /* Container */ container = [workspace wrappedContainer];
+		id /* IDEContainer */ container = [workspace wrappedContainer];
 		id /* PBXProject */ project = [container pbxProject];
 		id /* Xcode3Group */ rootGroup = [container rootGroup];
 		id /* Xcode3Group */ addonsGroup = [self findGroupNamed:@"addons" fromRoot:rootGroup];
@@ -256,6 +256,7 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 	@catch (NSException *exception) {
 		NSLog(@"OFPlugin problem! (please report the issue at https://github.com/admsyn/OFPlugin) : %@", exception);
+        PluginLog(@"OFPlugin problem! UPDATE (please report the issue at https://github.com/admsyn/OFPlugin) : %@", exception);
 	}
 	@finally {
 		
