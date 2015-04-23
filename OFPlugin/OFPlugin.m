@@ -256,7 +256,6 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	}
 	@catch (NSException *exception) {
 		NSLog(@"OFPlugin problem! (please report the issue at https://github.com/admsyn/OFPlugin) : %@", exception);
-        PluginLog(@"OFPlugin problem! UPDATE (please report the issue at https://github.com/admsyn/OFPlugin) : %@", exception);
 	}
 	@finally {
 		

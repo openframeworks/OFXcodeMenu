@@ -8,10 +8,13 @@
 
 #import "NSObject+OFPluginXcodePrivateMethods.h"
 #import <objc/objc-runtime.h>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wincomplete-implementation"
+
 @implementation NSObject (OFPluginXcodePrivateMethods)
 -(id /*IDEContainer*/)wrappedContainer {
-    //id wrappedContainer;
-    //object_getInstanceVariable(self, "_wrappedContainer", (void *)&wrappedContainer);
     return [self valueForKey:@"_wrappedContainer"];
 }
+#pragma clang diagnostic pop
 @end
