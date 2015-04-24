@@ -13,6 +13,7 @@
 		66C4B8AC182EB24200C2AA97 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66C4B8AB182EB24200C2AA97 /* Foundation.framework */; };
 		66C4B8B2182EB24200C2AA97 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 66C4B8B0182EB24200C2AA97 /* InfoPlist.strings */; };
 		66C4B8B5182EB24300C2AA97 /* OFPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 66C4B8B4182EB24300C2AA97 /* OFPlugin.m */; };
+		BE22814F1AE94DE4008ADFFD /* NSObject+OFPluginXcodePrivateMethods.m in Sources */ = {isa = PBXBuildFile; fileRef = BE22814E1AE94DE4008ADFFD /* NSObject+OFPluginXcodePrivateMethods.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +30,7 @@
 		66C4B8B3182EB24300C2AA97 /* OFPlugin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OFPlugin.h; sourceTree = "<group>"; };
 		66C4B8B4182EB24300C2AA97 /* OFPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OFPlugin.m; sourceTree = "<group>"; };
 		66C4B8B6182EB24300C2AA97 /* OFPlugin-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OFPlugin-Prefix.pch"; sourceTree = "<group>"; };
+		BE22814E1AE94DE4008ADFFD /* NSObject+OFPluginXcodePrivateMethods.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+OFPluginXcodePrivateMethods.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,6 +82,7 @@
 				66B17736182F06CB007AE57F /* OFAddonMenuItem.h */,
 				66B17737182F06CB007AE57F /* OFAddonMenuItem.m */,
 				6600E5A6183DC3BD003D57FB /* NSObject+OFPluginXcodePrivateMethods.h */,
+				BE22814E1AE94DE4008ADFFD /* NSObject+OFPluginXcodePrivateMethods.m */,
 				66C4B8AE182EB24200C2AA97 /* Supporting Files */,
 			);
 			path = OFPlugin;
@@ -159,6 +162,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				66C4B8B5182EB24300C2AA97 /* OFPlugin.m in Sources */,
+				BE22814F1AE94DE4008ADFFD /* NSObject+OFPluginXcodePrivateMethods.m in Sources */,
 				66B17738182F06CB007AE57F /* OFAddonMenuItem.m in Sources */,
 				6671EB59182F00040050B812 /* OFAddon.m in Sources */,
 			);
