@@ -37,14 +37,17 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	
 	if (self = [super init]) {
 		self.bundle = plugin;
-		[self generateMenu];
 		_platform = @"osx";
-		_addonsPath = [[NSUserDefaults standardUserDefaults] stringForKey:kOpenFrameworksAddonsPath];
-		if(!_addonsPath) {
-			[self setAddonsPath:[@"~/openFrameworks/addons/" stringByExpandingTildeInPath]];
-		}
-		
-		[self scanAddons];
+
+		[[NSOperationQueue mainQueue] addOperationWithBlock:^{
+			_addonsPath = [[NSUserDefaults standardUserDefaults] stringForKey:kOpenFrameworksAddonsPath];
+			if(!_addonsPath) {
+				[self setAddonsPath:[@"~/openFrameworks/addons/" stringByExpandingTildeInPath]];
+			}
+
+			[self scanAddons];
+			[self generateMenu];
+		}];
 	}
 	return self;
 }
