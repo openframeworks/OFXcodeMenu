@@ -8,7 +8,9 @@ OFPlugin
 Installing
 ==========
 
-Building the included Xcode project will install the plugin. To do it manually, put OFPlugin.xcplugin in:
+*Building the included Xcode project will install the plugin*
+
+To control installation manually, add/remove OFPlugin.xcplugin in:
 
     ~/Library/Application Support/Developer/Shared/Xcode/Plug-ins/OFPlugin.xcplugin
 
@@ -19,7 +21,7 @@ The plugin can also be installed via the [Alcatraz](http://alcatraz.io/) Xcode p
 Known Issues
 ============
 
-When coming across static libs in addons, they will be added as absolute paths. This is due to a quirk in the Xcode API being used by OFPlugin. If you intend to share a project with other people, it is recommended that you re-add static libs yourself (by right-clicking in the project navigator and selecting "Add Files To (project name)...", for example). You can also edit the project's .pbxproj file yourself if you're feeling brave.
+When addons contain static libs, they will be added with absolute paths. This is due to a quirk in the Xcode API being used by OFPlugin. If you intend to share a project with other people, it is recommended that you re-add static libs yourself (by right-clicking in the project navigator and selecting "Add Files To (project name)...", for example). You can also edit the project's .pbxproj file yourself if you're feeling brave.
 
 Troubleshooting
 ===============
@@ -36,6 +38,10 @@ defaults read /Applications/Xcode.app/Contents/Info DVTPlugInCompatibilityUUID
 Then, open the OFPlugin project and edit the Supporting Files > OFPlugin-Info.plist file. You'll need to add the UUID you just copied to the DVTPlugInCompatibilityUUIDs section.
 
 Rebuild the plugin, restart Xcode and you should see the OF menu reappear.
+
+**"I want to use this plugin with non-latest Xcode"**
+
+OFPlugin has been kept in sync with Xcode starting from Xcode 5, though only the latest Xcode is supported by github HEAD. To use with an older Xcode, you will have to checkout to an older OFPlugin commit and rebuild.
 
 **"The plugin isn't adding my addon correctly"**
 
