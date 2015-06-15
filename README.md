@@ -1,7 +1,7 @@
 OFPlugin
 ========
 
-[OpenFrameworks](http://openframeworks.cc) plugin for Xcode that adds addons to your project. Compatible with Xcode 5 and 6 on OS X 10.8+.
+[OpenFrameworks](http://openframeworks.cc) plugin for Xcode that adds addons to your project. Compatible with Xcode 5 and 6 on OS X 10.8+. HEAD of this repo is typically paired with the latest Xcode, for older Xcode releases, see the git tags or just checkout OFPlugin at the relevant point in time. 
 
 ![screenshot](screenshot.jpg "it does this")
 
