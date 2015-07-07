@@ -4,6 +4,8 @@
 #import "NSObject+OFPluginXcodePrivateMethods.h"
 
 NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
+static const NSInteger kExpectedXcodeMenuIndex = 0;
+static const NSInteger kExpectedXcodeMenuPreHideShowSeparatorItemIndex = 7;
 
 @interface OFPlugin()
 
@@ -83,8 +85,23 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	[_projectGeneratorItem setTarget:self];
 	[_projectGeneratorItem setEnabled:YES];
 	
-	NSUInteger menuIndex = [[NSApp mainMenu] indexOfItemWithTitle:@"Navigate"];
-	[[NSApp mainMenu] insertItem:_topLevelMenuItem atIndex:menuIndex > 0 ? menuIndex : 5];
+	NSMenu *xcodeMenu = [[NSApp mainMenu] itemWithTitle:@"Xcode"].submenu;
+	if (xcodeMenu == nil)
+		xcodeMenu = [[NSApp mainMenu] itemAtIndex:kExpectedXcodeMenuIndex].submenu;
+	
+	NSInteger xcodeMenuPreHideShowSeparatorItemIndex = -1;
+	for (NSMenuItem *item in xcodeMenu.itemArray) {
+		if ([item.title hasPrefix:@"Hide"]) {
+			xcodeMenuPreHideShowSeparatorItemIndex = [xcodeMenu indexOfItem:item] - 1;
+			break;
+		}
+	}
+	if (xcodeMenuPreHideShowSeparatorItemIndex == -1)
+		xcodeMenuPreHideShowSeparatorItemIndex = kExpectedXcodeMenuPreHideShowSeparatorItemIndex;
+	xcodeMenuPreHideShowSeparatorItemIndex = MIN(xcodeMenuPreHideShowSeparatorItemIndex, xcodeMenu.numberOfItems);
+	
+	[xcodeMenu insertItem:[NSMenuItem separatorItem] atIndex:xcodeMenuPreHideShowSeparatorItemIndex];
+	[xcodeMenu insertItem:_topLevelMenuItem atIndex:(xcodeMenuPreHideShowSeparatorItemIndex + 1)];
 }
 
 - (void)menuSelected:(id)sender {
