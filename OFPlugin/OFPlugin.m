@@ -12,7 +12,6 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 @property (nonatomic, strong) NSMenuItem * topLevelMenuItem;
 @property (nonatomic, strong) NSMenuItem * addAddonItem;
 @property (nonatomic, strong) NSMenuItem * websiteItem;
-@property (nonatomic, strong) NSMenuItem * projectGeneratorItem;
 @property (nonatomic, strong) NSString * platform;
 @property (nonatomic, strong) NSMenu * OFMenu;
 @property (nonatomic, strong) NSBundle * bundle;
@@ -79,10 +78,6 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 	[_websiteItem setTarget:self];
 	[_websiteItem setEnabled:YES];
 	
-	_projectGeneratorItem = [_OFMenu addItemWithTitle:@"Open Project Generator" action:@selector(openProjectGenerator:) keyEquivalent:@""];
-	[_projectGeneratorItem setTarget:self];
-	[_projectGeneratorItem setEnabled:YES];
-	
 	NSUInteger menuIndex = [[NSApp mainMenu] indexOfItemWithTitle:@"Navigate"];
 	[[NSApp mainMenu] insertItem:_topLevelMenuItem atIndex:menuIndex > 0 ? menuIndex : 5];
 }
@@ -97,8 +92,6 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 		[self scanAddons];
 	} else if(menuItem == _addAddonItem) {
 		return _addonsListMenu.itemArray.count > 0;
-	} else if(menuItem == _projectGeneratorItem) {
-		return [self projectGeneratorPath] != nil;
 	}
 	
 	return YES;
@@ -355,15 +348,6 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 				[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:searchURL]];
 			}
 		}
-	}
-}
-
-- (void)openProjectGenerator:(NSMenuItem *)sender {
-	
-	NSString * pgPath = [self projectGeneratorPath];
-	if(pgPath) {
-		NSURL * pgURL = [NSURL fileURLWithPath:pgPath isDirectory:YES];
-		[[NSWorkspace sharedWorkspace] openURL:pgURL];
 	}
 }
 
@@ -813,35 +797,6 @@ NSString * const kOpenFrameworksAddonsPath = @"openframeworks-addons-path";
 }
 
 #pragma mark - Extra Utils
-
-- (NSString *)projectGeneratorPath {
-	
-	// finding PG's folder
-	NSArray * possibleFolders = @[@"projectGenerator_osx", @"projectGenerator_ios", @"apps/projectGenerator/projectGeneratorSimple/bin"];
-	NSString * pgFolder = nil;
-	for(NSString * folder in possibleFolders) {
-		NSString * path = [NSString stringWithFormat:@"%@/../%@", _addonsPath, folder];
-		if([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-			pgFolder = path;
-			break;
-		}
-	}
-	
-	if(!pgFolder) return nil;
-	
-	// finding the PG itself
-	NSString * pgPath = nil;
-	NSArray * possibleAppNames = @[@"projectGenerator.app", @"projectGeneratorRelease.app", @"projectGeneratorDebug.app"];
-	for(NSString * appName in possibleAppNames) {
-		NSString * path = [NSString stringWithFormat:@"%@/%@", pgFolder, appName];
-		if([[NSFileManager defaultManager] fileExistsAtPath:path]) {
-			pgPath = path;
-			break;
-		}
-	}
-
-	return pgPath;
-}
 
 - (void)printToConsole:(NSString *)string {
 	
