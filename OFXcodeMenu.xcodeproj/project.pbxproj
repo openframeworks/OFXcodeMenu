@@ -7,30 +7,30 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6671EB59182F00040050B812 /* OFAddon.m in Sources */ = {isa = PBXBuildFile; fileRef = 6671EB58182F00040050B812 /* OFAddon.m */; };
-		66B17738182F06CB007AE57F /* OFAddonMenuItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 66B17737182F06CB007AE57F /* OFAddonMenuItem.m */; };
+		663634861BAB1A08008A7DAA /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 6636347A1BAB1A08008A7DAA /* InfoPlist.strings */; settings = {ASSET_TAGS = (); }; };
+		663634871BAB1A08008A7DAA /* NSObject+OFPluginXcodePrivateMethods.m in Sources */ = {isa = PBXBuildFile; fileRef = 6636347D1BAB1A08008A7DAA /* NSObject+OFPluginXcodePrivateMethods.m */; settings = {ASSET_TAGS = (); }; };
+		663634881BAB1A08008A7DAA /* OFAddon.m in Sources */ = {isa = PBXBuildFile; fileRef = 6636347F1BAB1A08008A7DAA /* OFAddon.m */; settings = {ASSET_TAGS = (); }; };
+		663634891BAB1A08008A7DAA /* OFAddonMenuItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 663634811BAB1A08008A7DAA /* OFAddonMenuItem.m */; settings = {ASSET_TAGS = (); }; };
+		6636348B1BAB1A08008A7DAA /* OFPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 663634851BAB1A08008A7DAA /* OFPlugin.m */; settings = {ASSET_TAGS = (); }; };
 		66C4B8AA182EB24200C2AA97 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66C4B8A9182EB24200C2AA97 /* AppKit.framework */; };
 		66C4B8AC182EB24200C2AA97 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 66C4B8AB182EB24200C2AA97 /* Foundation.framework */; };
-		66C4B8B2182EB24200C2AA97 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 66C4B8B0182EB24200C2AA97 /* InfoPlist.strings */; };
-		66C4B8B5182EB24300C2AA97 /* OFPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 66C4B8B4182EB24300C2AA97 /* OFPlugin.m */; };
-		BE22814F1AE94DE4008ADFFD /* NSObject+OFPluginXcodePrivateMethods.m in Sources */ = {isa = PBXBuildFile; fileRef = BE22814E1AE94DE4008ADFFD /* NSObject+OFPluginXcodePrivateMethods.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		6600E5A6183DC3BD003D57FB /* NSObject+OFPluginXcodePrivateMethods.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+OFPluginXcodePrivateMethods.h"; sourceTree = "<group>"; };
-		6671EB57182F00040050B812 /* OFAddon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OFAddon.h; sourceTree = "<group>"; };
-		6671EB58182F00040050B812 /* OFAddon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OFAddon.m; sourceTree = "<group>"; };
-		66B17736182F06CB007AE57F /* OFAddonMenuItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OFAddonMenuItem.h; sourceTree = "<group>"; };
-		66B17737182F06CB007AE57F /* OFAddonMenuItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OFAddonMenuItem.m; sourceTree = "<group>"; };
-		66C4B8A6182EB24200C2AA97 /* OFPlugin.xcplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OFPlugin.xcplugin; sourceTree = BUILT_PRODUCTS_DIR; };
+		6636347B1BAB1A08008A7DAA /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		6636347C1BAB1A08008A7DAA /* NSObject+OFPluginXcodePrivateMethods.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+OFPluginXcodePrivateMethods.h"; sourceTree = "<group>"; };
+		6636347D1BAB1A08008A7DAA /* NSObject+OFPluginXcodePrivateMethods.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+OFPluginXcodePrivateMethods.m"; sourceTree = "<group>"; };
+		6636347E1BAB1A08008A7DAA /* OFAddon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OFAddon.h; sourceTree = "<group>"; };
+		6636347F1BAB1A08008A7DAA /* OFAddon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OFAddon.m; sourceTree = "<group>"; };
+		663634801BAB1A08008A7DAA /* OFAddonMenuItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OFAddonMenuItem.h; sourceTree = "<group>"; };
+		663634811BAB1A08008A7DAA /* OFAddonMenuItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OFAddonMenuItem.m; sourceTree = "<group>"; };
+		663634841BAB1A08008A7DAA /* OFPlugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OFPlugin.h; sourceTree = "<group>"; };
+		663634851BAB1A08008A7DAA /* OFPlugin.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OFPlugin.m; sourceTree = "<group>"; };
+		6636348C1BAB1AC1008A7DAA /* OFXcodeMenu-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "OFXcodeMenu-Info.plist"; path = "OFXcodeMenu/OFXcodeMenu-Info.plist"; sourceTree = SOURCE_ROOT; };
+		6636348D1BAB1AC1008A7DAA /* OFXcodeMenu-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "OFXcodeMenu-Prefix.pch"; path = "OFXcodeMenu/OFXcodeMenu-Prefix.pch"; sourceTree = SOURCE_ROOT; };
+		66C4B8A6182EB24200C2AA97 /* OFXcodeMenu.xcplugin */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OFXcodeMenu.xcplugin; sourceTree = BUILT_PRODUCTS_DIR; };
 		66C4B8A9182EB24200C2AA97 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		66C4B8AB182EB24200C2AA97 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
-		66C4B8AF182EB24200C2AA97 /* OFPlugin-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "OFPlugin-Info.plist"; sourceTree = "<group>"; };
-		66C4B8B1182EB24200C2AA97 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		66C4B8B3182EB24300C2AA97 /* OFPlugin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OFPlugin.h; sourceTree = "<group>"; };
-		66C4B8B4182EB24300C2AA97 /* OFPlugin.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OFPlugin.m; sourceTree = "<group>"; };
-		66C4B8B6182EB24300C2AA97 /* OFPlugin-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "OFPlugin-Prefix.pch"; sourceTree = "<group>"; };
-		BE22814E1AE94DE4008ADFFD /* NSObject+OFPluginXcodePrivateMethods.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+OFPluginXcodePrivateMethods.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,10 +46,25 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		663634791BAB1A08008A7DAA /* OFXcodeMenu */ = {
+			isa = PBXGroup;
+			children = (
+				6636347C1BAB1A08008A7DAA /* NSObject+OFPluginXcodePrivateMethods.h */,
+				6636347D1BAB1A08008A7DAA /* NSObject+OFPluginXcodePrivateMethods.m */,
+				6636347E1BAB1A08008A7DAA /* OFAddon.h */,
+				6636347F1BAB1A08008A7DAA /* OFAddon.m */,
+				663634801BAB1A08008A7DAA /* OFAddonMenuItem.h */,
+				663634811BAB1A08008A7DAA /* OFAddonMenuItem.m */,
+				663634841BAB1A08008A7DAA /* OFPlugin.h */,
+				663634851BAB1A08008A7DAA /* OFPlugin.m */,
+			);
+			path = OFXcodeMenu;
+			sourceTree = SOURCE_ROOT;
+		};
 		66C4B89D182EB24200C2AA97 = {
 			isa = PBXGroup;
 			children = (
-				66C4B8AD182EB24200C2AA97 /* OFPlugin */,
+				66C4B8AD182EB24200C2AA97 /* OFXcodeMenu */,
 				66C4B8A8182EB24200C2AA97 /* Frameworks */,
 				66C4B8A7182EB24200C2AA97 /* Products */,
 			);
@@ -58,7 +73,7 @@
 		66C4B8A7182EB24200C2AA97 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				66C4B8A6182EB24200C2AA97 /* OFPlugin.xcplugin */,
+				66C4B8A6182EB24200C2AA97 /* OFXcodeMenu.xcplugin */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -72,28 +87,22 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		66C4B8AD182EB24200C2AA97 /* OFPlugin */ = {
+		66C4B8AD182EB24200C2AA97 /* OFXcodeMenu */ = {
 			isa = PBXGroup;
 			children = (
-				66C4B8B3182EB24300C2AA97 /* OFPlugin.h */,
-				66C4B8B4182EB24300C2AA97 /* OFPlugin.m */,
-				6671EB57182F00040050B812 /* OFAddon.h */,
-				6671EB58182F00040050B812 /* OFAddon.m */,
-				66B17736182F06CB007AE57F /* OFAddonMenuItem.h */,
-				66B17737182F06CB007AE57F /* OFAddonMenuItem.m */,
-				6600E5A6183DC3BD003D57FB /* NSObject+OFPluginXcodePrivateMethods.h */,
-				BE22814E1AE94DE4008ADFFD /* NSObject+OFPluginXcodePrivateMethods.m */,
+				663634791BAB1A08008A7DAA /* OFXcodeMenu */,
 				66C4B8AE182EB24200C2AA97 /* Supporting Files */,
 			);
+			name = OFXcodeMenu;
 			path = OFPlugin;
 			sourceTree = "<group>";
 		};
 		66C4B8AE182EB24200C2AA97 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
-				66C4B8AF182EB24200C2AA97 /* OFPlugin-Info.plist */,
-				66C4B8B0182EB24200C2AA97 /* InfoPlist.strings */,
-				66C4B8B6182EB24300C2AA97 /* OFPlugin-Prefix.pch */,
+				6636348C1BAB1AC1008A7DAA /* OFXcodeMenu-Info.plist */,
+				6636348D1BAB1AC1008A7DAA /* OFXcodeMenu-Prefix.pch */,
+				6636347A1BAB1A08008A7DAA /* InfoPlist.strings */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -101,9 +110,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		66C4B8A5182EB24200C2AA97 /* OFPlugin */ = {
+		66C4B8A5182EB24200C2AA97 /* OFXcodeMenu */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 66C4B8B9182EB24300C2AA97 /* Build configuration list for PBXNativeTarget "OFPlugin" */;
+			buildConfigurationList = 66C4B8B9182EB24300C2AA97 /* Build configuration list for PBXNativeTarget "OFXcodeMenu" */;
 			buildPhases = (
 				66C4B8A2182EB24200C2AA97 /* Sources */,
 				66C4B8A3182EB24200C2AA97 /* Frameworks */,
@@ -113,9 +122,9 @@
 			);
 			dependencies = (
 			);
-			name = OFPlugin;
+			name = OFXcodeMenu;
 			productName = OFPlugin;
-			productReference = 66C4B8A6182EB24200C2AA97 /* OFPlugin.xcplugin */;
+			productReference = 66C4B8A6182EB24200C2AA97 /* OFXcodeMenu.xcplugin */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
@@ -125,10 +134,10 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = OF;
-				LastUpgradeCheck = 0500;
+				LastUpgradeCheck = 0700;
 				ORGANIZATIONNAME = "";
 			};
-			buildConfigurationList = 66C4B8A1182EB24200C2AA97 /* Build configuration list for PBXProject "OFPlugin" */;
+			buildConfigurationList = 66C4B8A1182EB24200C2AA97 /* Build configuration list for PBXProject "OFXcodeMenu" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -140,7 +149,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				66C4B8A5182EB24200C2AA97 /* OFPlugin */,
+				66C4B8A5182EB24200C2AA97 /* OFXcodeMenu */,
 			);
 		};
 /* End PBXProject section */
@@ -150,7 +159,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				66C4B8B2182EB24200C2AA97 /* InfoPlist.strings in Resources */,
+				663634861BAB1A08008A7DAA /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -161,22 +170,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				66C4B8B5182EB24300C2AA97 /* OFPlugin.m in Sources */,
-				BE22814F1AE94DE4008ADFFD /* NSObject+OFPluginXcodePrivateMethods.m in Sources */,
-				66B17738182F06CB007AE57F /* OFAddonMenuItem.m in Sources */,
-				6671EB59182F00040050B812 /* OFAddon.m in Sources */,
+				663634871BAB1A08008A7DAA /* NSObject+OFPluginXcodePrivateMethods.m in Sources */,
+				6636348B1BAB1A08008A7DAA /* OFPlugin.m in Sources */,
+				663634891BAB1A08008A7DAA /* OFAddonMenuItem.m in Sources */,
+				663634881BAB1A08008A7DAA /* OFAddon.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
-		66C4B8B0182EB24200C2AA97 /* InfoPlist.strings */ = {
+		6636347A1BAB1A08008A7DAA /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
-				66C4B8B1182EB24200C2AA97 /* en */,
+				6636347B1BAB1A08008A7DAA /* en */,
 			);
 			name = InfoPlist.strings;
+			path = ../OFXcodeMenu;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -198,6 +208,7 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -257,10 +268,11 @@
 				DEPLOYMENT_LOCATION = YES;
 				DSTROOT = "$(HOME)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "OFPlugin/OFPlugin-Prefix.pch";
+				GCC_PREFIX_HEADER = "OFXcodeMenu/OFXcodeMenu-Prefix.pch";
 				GCC_WARN_UNDECLARED_SELECTOR = NO;
-				INFOPLIST_FILE = "OFPlugin/OFPlugin-Info.plist";
+				INFOPLIST_FILE = "OFXcodeMenu/OFXcodeMenu-Info.plist";
 				INSTALL_PATH = "/Library/Application Support/Developer/Shared/Xcode/Plug-ins";
+				PRODUCT_BUNDLE_IDENTIFIER = "admsyn.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "";
 				WRAPPER_EXTENSION = xcplugin;
@@ -274,10 +286,11 @@
 				DEPLOYMENT_LOCATION = YES;
 				DSTROOT = "$(HOME)";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "OFPlugin/OFPlugin-Prefix.pch";
+				GCC_PREFIX_HEADER = "OFXcodeMenu/OFXcodeMenu-Prefix.pch";
 				GCC_WARN_UNDECLARED_SELECTOR = NO;
-				INFOPLIST_FILE = "OFPlugin/OFPlugin-Info.plist";
+				INFOPLIST_FILE = "OFXcodeMenu/OFXcodeMenu-Info.plist";
 				INSTALL_PATH = "/Library/Application Support/Developer/Shared/Xcode/Plug-ins";
+				PRODUCT_BUNDLE_IDENTIFIER = "admsyn.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "";
 				WRAPPER_EXTENSION = xcplugin;
@@ -287,7 +300,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		66C4B8A1182EB24200C2AA97 /* Build configuration list for PBXProject "OFPlugin" */ = {
+		66C4B8A1182EB24200C2AA97 /* Build configuration list for PBXProject "OFXcodeMenu" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				66C4B8B7182EB24300C2AA97 /* Debug */,
@@ -296,7 +309,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		66C4B8B9182EB24300C2AA97 /* Build configuration list for PBXNativeTarget "OFPlugin" */ = {
+		66C4B8B9182EB24300C2AA97 /* Build configuration list for PBXNativeTarget "OFXcodeMenu" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				66C4B8BA182EB24300C2AA97 /* Debug */,
