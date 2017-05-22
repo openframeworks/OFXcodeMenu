@@ -1,6 +1,7 @@
 OFXcodeMenu
 ========
-(formerly OFPlugin)
+
+# NOT COMPATIBLE WITH XCODE 8+
 
 [OpenFrameworks](http://openframeworks.cc) plugin for Xcode that adds addons to your project. Compatible with Xcode 5 - 7 on OS X 10.8+. `HEAD` of this repo is typically paired with the latest Xcode. For older Xcode releases, see the git tags or just checkout OFXcodeMenu at the relevant point in time. 
 
